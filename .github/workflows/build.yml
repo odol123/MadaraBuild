@@ -23,6 +23,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.5'
+
+      - name: Accept Android SDK Licenses
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Set App Name & Package ID
         run: |
           SAFE_NAME=$(echo "${{ github.event.inputs.app_name }}" | sed 's/[&/\]/\\&/g')
@@ -34,7 +41,7 @@ jobs:
 
       - name: Sign APK
         run: |
-          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | tail -n 1)
+          BUILD_TOOLS=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -n 1)
           keytool -genkeypair -v -keystore release.keystore -alias appkey -keyalg RSA -keysize 2048 -validity 10000 -storepass 123456 -keypass 123456 -dname "CN=Bot, OU=Dev, O=App, L=ID, S=ID, C=ID"
           $BUILD_TOOLS/zipalign -v -p 4 app/build/outputs/apk/release/app-release-unsigned.apk app-aligned.apk
           $BUILD_TOOLS/apksigner sign --ks release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out final-app.apk app-aligned.apk
