@@ -30,13 +30,16 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Set App Name & Package ID
+      - name: Set App Name, Package ID & Icon
         env:
           APP_NAME: ${{ github.event.inputs.app_name }}
           PACKAGE_ID: ${{ github.event.inputs.package_id }}
         run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq python3-pil
           python3 -c '
           import os, re, shutil
+          from PIL import Image
+
           raw_name = os.environ.get("APP_NAME", "WebApp")
           name = re.sub(r"[^a-zA-Z0-9 _-]", "", raw_name).strip() or "WebApp"
           pkg = re.sub(r"[^a-zA-Z0-9._]", "", os.environ.get("PACKAGE_ID", "com.bot.webapp")).strip() or "com.bot.webapp"
@@ -51,8 +54,19 @@ jobs:
           gradle_txt = re.sub(r"applicationId\s+\"[^\"]*\"", f"applicationId \"{pkg}\"", gradle_txt)
           with open("app/build.gradle", "w", encoding="utf-8") as f:
               f.write(gradle_txt)
+
+          os.makedirs("app/src/main/res/mipmap-xxxhdpi", exist_ok=True)
+          out_icon = "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+          if os.path.exists("icon.png"):
+              img = Image.open("icon.png").convert("RGBA")
+              w, h = img.size
+              m = min(w, h)
+              img = img.crop(((w - m) // 2, (h - m) // 2, (w + m) // 2, (h + m) // 2))
+              img = img.resize((192, 192), Image.LANCZOS)
+              img.save(out_icon, "PNG")
+          else:
+              Image.new("RGBA", (192, 192), (33, 150, 243, 255)).save(out_icon, "PNG")
           '
-          cat app/src/main/res/values/strings.xml
 
       - name: Compile APK
         run: gradle assembleRelease
