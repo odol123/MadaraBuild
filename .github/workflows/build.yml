@@ -31,10 +31,25 @@ jobs:
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Set App Name & Package ID
+        env:
+          APP_NAME: ${{ github.event.inputs.app_name }}
+          PACKAGE_ID: ${{ github.event.inputs.package_id }}
         run: |
-          SAFE_NAME=$(echo "${{ github.event.inputs.app_name }}" | sed 's/[&/\]/\\&/g')
-          sed -i "s|<string name=\"app_name\">.*</string>|<string name=\"app_name\">$SAFE_NAME</string>|g" app/src/main/res/values/strings.xml
-          sed -i "s|applicationId \".*\"|applicationId \"${{ github.event.inputs.package_id }}\"|g" app/build.gradle
+          python3 -c '
+          import os, html, re
+          name = os.environ.get("APP_NAME", "WebApp").strip() or "WebApp"
+          pkg = os.environ.get("PACKAGE_ID", "com.bot.webapp").strip() or "com.bot.webapp"
+
+          os.makedirs("app/src/main/res/values", exist_ok=True)
+          with open("app/src/main/res/values/strings.xml", "w", encoding="utf-8") as f:
+              f.write(f"<resources>\n    <string name=\"app_name\">{html.escape(name)}</string>\n</resources>\n")
+
+          with open("app/build.gradle", "r", encoding="utf-8") as f:
+              gradle_txt = f.read()
+          gradle_txt = re.sub(r"applicationId\s+\"[^\"]*\"", f"applicationId \"{pkg}\"", gradle_txt)
+          with open("app/build.gradle", "w", encoding="utf-8") as f:
+              f.write(gradle_txt)
+          '
 
       - name: Compile APK
         run: gradle assembleRelease
@@ -51,4 +66,3 @@ jobs:
         with:
           name: built-apk
           path: final-app.apk
-          
