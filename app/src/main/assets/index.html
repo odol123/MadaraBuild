@@ -1,1418 +1,830 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="dark">
+<html lang="id" data-theme="dark" data-font="auto" data-bg="none">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Rubik Timer — timer speedcubing dengan inspeksi WCA, generator scramble, statistik ao5 dan ao12, 7 pilihan tema, serta riwayat solve tersimpan otomatis.">
+<meta name="description" content="Rubik Timer — timer speedcubing: inspeksi WCA, scramble 3x3/2x2, statistik best/ao5/ao12, 7 tema, latar foto dengan efek kaca buram, mode timer penuh, font, peringatan rekor baru.">
 <meta name="theme-color" content="#08090c">
 <title>Rubik Timer — Speedcubing Timer</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23101218'/%3E%3Crect x='6' y='6' width='8' height='8' rx='2' fill='%234dd4ff'/%3E%3Crect x='18' y='6' width='8' height='8' rx='2' fill='%2334e08a'/%3E%3Crect x='6' y='18' width='8' height='8' rx='2' fill='%23ffcc4d'/%3E%3Crect x='18' y='18' width='8' height='8' rx='2' fill='%23ff5c7a'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-<script>
-/* Terapkan tema tersimpan sebelum render untuk menghindari kedipan */
-(function () {
-  try {
-    var raw = localStorage.getItem("rubiktimer.v1");
-    if (!raw) return;
-    var t = JSON.parse(raw).theme;
-    var valid = ["dark", "light", "neon", "ocean", "sunset", "forest", "mono"];
-    if (valid.indexOf(t) > -1) document.documentElement.dataset.theme = t;
-  } catch (e) {}
-})();
-</script>
-
 <style>
-/* =========================================================
-   Variabel non-warna
-   ========================================================= */
-:root{
-  --radius:16px;
-  --wrap:920px;
-  --ease:cubic-bezier(.22,.61,.36,1);
-  color-scheme: dark;
-}
+  :root{
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --serif: ui-serif, Georgia, "Times New Roman", serif;
+    --rounded: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN", "Segoe UI", system-ui, sans-serif;
+    --condensed: "Arial Narrow", "Roboto Condensed", "Segoe UI", system-ui, sans-serif;
+    --ease: .35s ease;
+    --veil: .62;
+    --photo: none;
+    --font: var(--sans);
+    --glass-blur: 16px;
+    --ctl: 38px;
+  }
 
-/* =========================================================
-   TEMA 1 — Gelap (default)
-   ========================================================= */
-:root,
-html[data-theme="dark"]{
-  --bg:#08090c;
-  --bg-2:#0b0d12;
-  --surface:#101218;
-  --surface-2:#161a22;
-  --border:#1e2230;
-  --border-2:#2a3040;
-  --text:#f2f4f8;
-  --muted:#8b94a8;
-  --muted-2:#5d6577;
-  --accent:#4dd4ff;
-  --accent-soft:rgba(77,212,255,.12);
-  --on-accent:#08090c;
-  --go:#34e08a;
-  --ready:#ffcc4d;
-  --danger:#ff5c7a;
-  --shadow:0 18px 44px rgba(0,0,0,.45);
-  color-scheme: dark;
-}
+  html[data-theme="dark"]{
+    color-scheme: dark;
+    --bg:#08090c; --card:#11151d; --fg:#e8ecf4; --dim:#8b94a7; --line:#1e2431;
+    --accent:#4dd4ff; --ready:#34e08a; --warn:#ffcc4d; --bad:#ff5c7a; --radius:14px; --veil:.62;
+  }
+  html[data-theme="light"]{
+    color-scheme: light;
+    --bg:#f4f6fb; --card:#fff; --fg:#10131a; --dim:#5c6577; --line:#dbe1ec;
+    --accent:#0b8fd6; --ready:#12a05f; --warn:#c98a00; --bad:#d93a5c; --radius:14px; --veil:.55;
+  }
+  html[data-theme="midnight"]{
+    color-scheme: dark;
+    --bg:#0a0f1e; --card:#121a30; --fg:#dbe4ff; --dim:#7c89a8; --line:#1e2942;
+    --accent:#7c9cff; --ready:#4de0a0; --warn:#ffd166; --bad:#ff6b8b; --radius:18px; --veil:.6;
+  }
+  html[data-theme="nord"]{
+    color-scheme: dark;
+    --bg:#0e1620; --card:#16222f; --fg:#e5eef7; --dim:#8296a8; --line:#22303f;
+    --accent:#88c0d0; --ready:#a3be8c; --warn:#ebcb8b; --bad:#bf616a; --radius:12px; --veil:.6;
+  }
+  html[data-theme="forest"]{
+    color-scheme: dark;
+    --bg:#07130d; --card:#0f2118; --fg:#dff3e6; --dim:#7ba28c; --line:#183326;
+    --accent:#4ade80; --ready:#22d3ee; --warn:#fbbf24; --bad:#f87171; --radius:16px; --veil:.6;
+  }
+  html[data-theme="sunset"]{
+    color-scheme: dark;
+    --bg:#180d12; --card:#25141c; --fg:#ffe9ef; --dim:#b08794; --line:#3a1f2b;
+    --accent:#ff8fab; --ready:#7ee0c0; --warn:#ffc36b; --bad:#ff5c7a; --radius:18px; --veil:.6;
+  }
+  html[data-theme="mono"]{
+    color-scheme: dark;
+    --bg:#0b0b0b; --card:#151515; --fg:#f2f2f2; --dim:#8d8d8d; --line:#262626;
+    --accent:#f2f2f2; --ready:#b8ff3d; --warn:#ffd400; --bad:#ff4d4d; --radius:4px; --veil:.7;
+  }
 
-/* =========================================================
-   TEMA 2 — Terang
-   ========================================================= */
-html[data-theme="light"]{
-  --bg:#f5f7fa;
-  --bg-2:#eceff4;
-  --surface:#ffffff;
-  --surface-2:#f2f4f8;
-  --border:#e1e5ee;
-  --border-2:#cfd6e3;
-  --text:#11141b;
-  --muted:#656e80;
-  --muted-2:#98a1b2;
-  --accent:#0a9fc4;
-  --accent-soft:rgba(10,159,196,.10);
-  --on-accent:#ffffff;
-  --go:#0f9159;
-  --ready:#c2410c;
-  --danger:#d92b4b;
-  --shadow:0 18px 44px rgba(24,35,60,.14);
-  color-scheme: light;
-}
+  html[data-font="auto"]     { --font: var(--sans); }
+  html[data-font="mono"]     { --font: var(--mono); }
+  html[data-font="serif"]    { --font: var(--serif); }
+  html[data-font="rounded"]  { --font: var(--rounded); }
+  html[data-font="condensed"]{ --font: var(--condensed); }
 
-/* =========================================================
-   TEMA 3 — Neon
-   ========================================================= */
-html[data-theme="neon"]{
-  --bg:#0a0616;
-  --bg-2:#0f0820;
-  --surface:#150c24;
-  --surface-2:#1d1233;
-  --border:#2c1a4a;
-  --border-2:#45256e;
-  --text:#f7ecff;
-  --muted:#a98fd0;
-  --muted-2:#7a6199;
-  --accent:#ff3df0;
-  --accent-soft:rgba(255,61,240,.13);
-  --on-accent:#16061f;
-  --go:#00ffb3;
-  --ready:#ffe14d;
-  --danger:#ff4d6d;
-  --shadow:0 18px 44px rgba(60,0,80,.5);
-  color-scheme: dark;
-}
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0; font-family:var(--font); color:var(--fg); background:var(--bg);
+    -webkit-tap-highlight-color:transparent; overflow-x:hidden;
+    transition:background var(--ease), color var(--ease);
+  }
+  body::before{
+    content:""; position:fixed; inset:0; z-index:-2;
+    background-image:var(--photo); background-size:cover; background-position:center;
+    opacity:0; transition:opacity var(--ease);
+  }
+  html[data-bg="photo"] body::before{ opacity:1; }
+  body::after{
+    content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+    background:
+      radial-gradient(60% 45% at 50% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 70%);
+    opacity:.9; transition:opacity var(--ease);
+  }
+  html[data-bg="none"] body::after{ opacity:0; }
+  html[data-bg="grid"] body::after{
+    background-image:
+      linear-gradient(color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--line) 70%, transparent) 1px, transparent 1px);
+    background-size:44px 44px; opacity:.5;
+  }
+  html[data-bg="photo"] body::after{
+    background:rgba(0,0,0,var(--veil)); opacity:1;
+  }
 
-/* =========================================================
-   TEMA 4 — Samudra
-   ========================================================= */
-html[data-theme="ocean"]{
-  --bg:#04141c;
-  --bg-2:#061b25;
-  --surface:#082330;
-  --surface-2:#0b2c3c;
-  --border:#0e3648;
-  --border-2:#15485f;
-  --text:#e6f7ff;
-  --muted:#7fb6cc;
-  --muted-2:#4f8aa1;
-  --accent:#35d0ff;
-  --accent-soft:rgba(53,208,255,.12);
-  --on-accent:#04141c;
-  --go:#2ee6a8;
-  --ready:#ffd166;
-  --danger:#ff6b8a;
-  --shadow:0 18px 44px rgba(0,26,38,.55);
-  color-scheme: dark;
-}
+  .wrap{ max-width:820px; margin:0 auto; padding:14px 16px 40px; }
 
-/* =========================================================
-   TEMA 5 — Senja
-   ========================================================= */
-html[data-theme="sunset"]{
-  --bg:#170a10;
-  --bg-2:#200d15;
-  --surface:#26121a;
-  --surface-2:#301823;
-  --border:#3d1c28;
-  --border-2:#57283a;
-  --text:#fff0e8;
-  --muted:#c99a8f;
-  --muted-2:#966a63;
-  --accent:#ff8a4c;
-  --accent-soft:rgba(255,138,76,.13);
-  --on-accent:#200a06;
-  --go:#ffd166;
-  --ready:#ffe08a;
-  --danger:#ff4d5e;
-  --shadow:0 18px 44px rgba(48,6,14,.55);
-  color-scheme: dark;
-}
+  /* ===== HEADER: boleh wrap, semua kontrol tinggi seragam ===== */
+  .top{
+    display:flex; align-items:center; gap:10px 12px; flex-wrap:wrap;
+    padding:6px 0 14px;
+  }
+  .brand{
+    display:flex; align-items:center; gap:9px; font-weight:700; letter-spacing:.4px;
+    font-size:14px; white-space:nowrap; flex:1 1 auto; min-width:0;
+  }
+  .cube{ display:grid; grid-template-columns:1fr 1fr; gap:2px; width:22px; height:22px; flex:0 0 auto; }
+  .cube i{ border-radius:3px; display:block; }
+  .cube i:nth-child(1){ background:var(--accent); }
+  .cube i:nth-child(2){ background:var(--ready); }
+  .cube i:nth-child(3){ background:var(--warn); }
+  .cube i:nth-child(4){ background:var(--bad); }
 
-/* =========================================================
-   TEMA 6 — Rimba
-   ========================================================= */
-html[data-theme="forest"]{
-  --bg:#08120d;
-  --bg-2:#0a1811;
-  --surface:#0d1c14;
-  --surface-2:#12261b;
-  --border:#17301f;
-  --border-2:#20452c;
-  --text:#e8f7ec;
-  --muted:#86b295;
-  --muted-2:#587a64;
-  --accent:#5dff9b;
-  --accent-soft:rgba(93,255,155,.12);
-  --on-accent:#06130b;
-  --go:#b6ff5d;
-  --ready:#ffe08a;
-  --danger:#ff6b6b;
-  --shadow:0 18px 44px rgba(0,28,12,.55);
-  color-scheme: dark;
-}
+  .tools{
+    display:flex; gap:8px; align-items:center; flex-wrap:nowrap;
+    flex:0 0 auto; margin-left:auto;
+  }
 
-/* =========================================================
-   TEMA 7 — Mono
-   ========================================================= */
-html[data-theme="mono"]{
-  --bg:#0d0d0d;
-  --bg-2:#121212;
-  --surface:#171717;
-  --surface-2:#1e1e1e;
-  --border:#2a2a2a;
-  --border-2:#3d3d3d;
-  --text:#f0f0f0;
-  --muted:#9a9a9a;
-  --muted-2:#6b6b6b;
-  --accent:#e8e8e8;
-  --accent-soft:rgba(232,232,232,.10);
-  --on-accent:#0d0d0d;
-  --go:#cfcfcf;
-  --ready:#f5f5f5;
-  --danger:#ff5c7a;
-  --shadow:0 18px 44px rgba(0,0,0,.55);
-  color-scheme: dark;
-}
+  select, button{ font-family:inherit; color:var(--fg); }
 
-/* =========================================================
-   Dasar
-   ========================================================= */
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font-family:"Space Grotesk",system-ui,-apple-system,"Segoe UI",sans-serif;
-  line-height:1.6;-webkit-font-smoothing:antialiased;min-height:100vh;
-  transition:background .25s var(--ease),color .25s var(--ease);
-}
-[hidden]{display:none !important}
-button{font:inherit;color:inherit;cursor:pointer}
-h1,h2,h3{margin:0;letter-spacing:-.02em;line-height:1.2}
-p{margin:0}
-ul{margin:0;padding:0;list-style:none}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
-kbd{
-  font-family:"JetBrains Mono",monospace;font-size:.72em;font-weight:600;
-  padding:2px 6px;border-radius:5px;border:1px solid var(--border-2);
-  background:var(--surface-2);color:var(--muted);
-}
-.wrap{width:min(calc(100% - 32px),var(--wrap));margin-inline:auto}
+  .sel{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    height:var(--ctl); padding:0 10px; font-size:13px; font-weight:600;
+    outline:none; color:var(--fg); width:auto; min-width:0; flex:0 0 auto;
+    -webkit-appearance:menulist; appearance:auto;
+  }
+  .sel option{ background:var(--card); color:var(--fg); }
+  .sel:focus-visible{ border-color:var(--accent); }
 
-/* =========================================================
-   Top bar
-   ========================================================= */
-.topbar{
-  position:sticky;top:0;z-index:50;
-  background:var(--bg);
-  background:color-mix(in srgb,var(--bg) 88%,transparent);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--border);
-  transition:background .25s var(--ease),border-color .25s var(--ease);
-}
-.topbar-inner{display:flex;align-items:center;gap:18px;height:64px}
-.brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:1.02rem;letter-spacing:-.03em;white-space:nowrap}
-.brand-cube{
-  width:30px;height:30px;flex:none;border-radius:9px;position:relative;
-  background:conic-gradient(from 45deg,var(--accent),var(--go),var(--ready),var(--danger),var(--accent));
-  box-shadow:0 0 0 1px var(--border),0 6px 18px var(--accent-soft);
-}
-.brand-cube::after{content:"";position:absolute;inset:8px;border-radius:4px;background:var(--bg)}
+  /* tombol ikon: SVG inline -> selalu render, tidak bergantung font emoji */
+  .icon{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    height:var(--ctl); min-width:var(--ctl); padding:0 10px;
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    cursor:pointer; color:var(--fg); font-size:13px; font-weight:600; line-height:1;
+    flex:0 0 auto; white-space:nowrap;
+    transition:transform .15s, border-color .2s, color .2s;
+  }
+  .icon svg{ width:18px; height:18px; display:block; flex:0 0 auto; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  .icon .lbl{ display:none; white-space:nowrap; }
+  .icon:hover{ border-color:var(--accent); color:var(--accent); }
+  .icon:active{ transform:scale(.94); }
+  .icon[aria-pressed="true"]{ border-color:var(--accent); color:var(--accent); }
 
-.puzzle-tabs{display:flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-left:auto}
-.puzzle-tab{
-  border:none;background:transparent;color:var(--muted);
-  padding:6px 12px;border-radius:7px;font-size:.82rem;font-weight:600;white-space:nowrap;
-  transition:background .18s var(--ease),color .18s var(--ease);
-}
-.puzzle-tab:hover{color:var(--text)}
-.puzzle-tab.active{background:var(--accent);color:var(--on-accent)}
+  /* label muncul hanya bila ruang cukup */
+  @media (min-width:700px){
+    .icon .lbl{ display:inline; }
+  }
 
-.topbar-tools{display:flex;align-items:center;gap:8px}
-.toggle{
-  display:inline-flex;align-items:center;gap:8px;cursor:pointer;user-select:none;
-  padding:7px 11px;border:1px solid var(--border);border-radius:9px;
-  background:var(--surface);font-size:.8rem;font-weight:600;color:var(--muted);
-  transition:border-color .18s var(--ease),color .18s var(--ease);
-}
-.toggle:hover{border-color:var(--border-2);color:var(--text)}
-.toggle input{position:absolute;opacity:0;pointer-events:none}
-.switch-track{
-  width:30px;height:17px;flex:none;border-radius:999px;background:var(--border-2);
-  position:relative;transition:background .2s var(--ease);
-}
-.switch-track::after{
-  content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;
-  background:#fff;transition:transform .2s var(--ease);
-}
-.toggle input:checked + .switch-track{background:var(--accent)}
-.toggle input:checked + .switch-track::after{transform:translateX(13px)}
+  /* layar sempit: brand 1 baris, kontrol turun 1 baris penuh & melebar */
+  @media (max-width:520px){
+    .brand{ flex:1 1 100%; }
+    .tools{ flex:1 1 100%; margin-left:0; }
+    .tools .sel{ flex:1 1 auto; width:100%; min-width:0; }
+    .tools .icon{ padding:0; min-width:var(--ctl); }
+  }
 
-.icon-btn{
-  width:36px;height:36px;display:grid;place-items:center;
-  border:1px solid var(--border);border-radius:9px;background:var(--surface);
-  color:var(--muted);transition:border-color .18s var(--ease),color .18s var(--ease);
-}
-.icon-btn:hover{border-color:var(--border-2);color:var(--text)}
-.icon-btn svg{width:17px;height:17px}
-.icon-btn[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+  .scr{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; font-family:var(--mono); font-size:16px; line-height:1.65;
+    letter-spacing:.4px; word-spacing:2px; min-height:58px; display:flex; align-items:center;
+    transition:border-color var(--ease), background var(--ease);
+  }
+  .scr.done{ color:var(--dim); }
 
-/* ---------- Pemilih tema ---------- */
-.theme-picker{position:relative}
-.theme-menu{
-  position:absolute;top:calc(100% + 8px);right:0;z-index:80;
-  width:232px;max-width:calc(100vw - 24px);padding:6px;
-  border:1px solid var(--border-2);border-radius:12px;
-  background:var(--surface);box-shadow:var(--shadow);
-  display:grid;gap:2px;
-  animation:menuIn .16s var(--ease);
-}
-@keyframes menuIn{from{opacity:0;transform:translateY(-6px)}}
-.theme-opt{
-  display:flex;align-items:center;gap:10px;width:100%;
-  padding:8px 10px;border:none;border-radius:8px;
-  background:transparent;color:var(--text);
-  font-size:.84rem;font-weight:600;text-align:left;
-  transition:background .15s var(--ease),color .15s var(--ease);
-}
-.theme-opt:hover{background:var(--surface-2)}
-.theme-opt[aria-selected="true"]{background:var(--accent-soft);color:var(--accent)}
-.swatches{display:flex;gap:3px;flex:none}
-.swatch{
-  width:12px;height:12px;border-radius:4px;
-  border:1px solid rgba(128,128,128,.35);
-}
-.theme-name{flex:1}
-.theme-check{font-size:.8rem;font-weight:700;opacity:0;color:var(--accent)}
-.theme-opt[aria-selected="true"] .theme-check{opacity:1}
+  .stage{
+    margin-top:16px; border:1px solid var(--line); border-radius:var(--radius);
+    background:var(--card); padding:34px 16px 28px; text-align:center; cursor:pointer;
+    transition:border-color .2s, box-shadow .35s, background var(--ease);
+    position:relative; overflow:hidden; user-select:none;
+  }
+  .stage.ready{ border-color:var(--ready); box-shadow:0 0 0 2px color-mix(in srgb, var(--ready) 35%, transparent), 0 0 40px -8px var(--ready); }
+  .stage.running{ border-color:var(--accent); }
+  .stage.flash{ animation:recFlash 1.1s ease; }
+  @keyframes recFlash{
+    0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--warn) 70%, transparent), 0 0 0 0 var(--warn); }
+    35%{ box-shadow:0 0 0 6px color-mix(in srgb, var(--warn) 45%, transparent), 0 0 60px -4px var(--warn); }
+    100%{ box-shadow:0 0 0 0 transparent, 0 0 0 0 transparent; }
+  }
+  .time{
+    font-family:var(--mono); font-variant-numeric:tabular-nums;
+    font-size:clamp(46px, 15vw, 92px); font-weight:700; line-height:1;
+    letter-spacing:-1px; transition:color .25s;
+  }
+  .stage.ready .time{ color:var(--ready); }
+  .stage.running .time{ color:var(--accent); }
+  .stage.inspect .time{ color:var(--warn); }
+  .stage.inspect.danger .time{ color:var(--bad); }
+  .hint{ margin-top:12px; font-size:12px; color:var(--dim); letter-spacing:.5px; min-height:16px; }
 
-/* =========================================================
-   Layout
-   ========================================================= */
-.main{padding:22px 0 48px}
+  .stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:14px; }
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px 10px; text-align:center; transition:border-color .3s, box-shadow .3s, background var(--ease);
+  }
+  .card.hit{ border-color:var(--warn); box-shadow:0 0 24px -6px var(--warn); }
+  .card b{ display:block; font-family:var(--mono); font-size:18px; font-variant-numeric:tabular-nums; margin-top:4px; }
+  .card span{ font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--dim); }
 
-.scramble-card{
-  border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);padding:16px 18px;margin-bottom:16px;
-  transition:background .25s var(--ease),border-color .25s var(--ease);
-}
-.scramble-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap}
-.scramble-label{
-  font-size:.68rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--muted-2);font-family:"JetBrains Mono",monospace;
-}
-.scramble-actions{margin-left:auto;display:flex;gap:6px}
-.mini-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 11px;border:1px solid var(--border);border-radius:8px;
-  background:var(--surface-2);color:var(--muted);
-  font-size:.75rem;font-weight:600;
-  transition:border-color .18s var(--ease),color .18s var(--ease),background .18s var(--ease);
-}
-.mini-btn:hover{border-color:var(--accent);color:var(--accent)}
-.scramble{
-  font-family:"JetBrains Mono",monospace;
-  font-size:clamp(.95rem,2vw,1.22rem);
-  font-weight:500;line-height:1.75;letter-spacing:.02em;
-  user-select:all;word-spacing:.15em;
-}
+  .listwrap{ margin-top:18px; }
+  .listhead{ display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .listhead h2{ font-size:12px; letter-spacing:1.4px; text-transform:uppercase; color:var(--dim); margin:0; font-weight:600; }
+  .link{ background:none; border:none; font-size:12px; color:var(--dim); cursor:pointer; padding:4px 6px; border-radius:6px; }
+  .link:hover{ color:var(--bad); }
 
-/* =========================================================
-   Timer
-   ========================================================= */
-.timer-stage{
-  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:6px;padding:44px 20px 38px;min-height:340px;
-  border:1px solid var(--border);border-radius:var(--radius);
-  background:radial-gradient(600px circle at 50% 0%,var(--accent-soft),transparent 70%),var(--surface);
-  overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;
-  transition:border-color .2s var(--ease),background .25s var(--ease);
-}
-.timer-stage.holding{border-color:var(--ready)}
-.timer-stage.running{border-color:var(--go)}
-.timer-stage::before{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(var(--border) 1px,transparent 1px),
-                   linear-gradient(90deg,var(--border) 1px,transparent 1px);
-  background-size:48px 48px;opacity:.22;
-  mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 10%,transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,#000 10%,transparent 75%);
-}
-.inspection{
-  position:relative;font-family:"JetBrains Mono",monospace;
-  font-size:clamp(1.6rem,4vw,2.4rem);font-weight:700;color:var(--ready);
-  letter-spacing:.02em;margin-bottom:-6px;
-}
-.inspection.danger{color:var(--danger);animation:pulse 1s infinite}
-@keyframes pulse{50%{opacity:.35}}
-.timer{
-  position:relative;font-family:"JetBrains Mono",monospace;
-  font-size:clamp(3.8rem,17vw,9rem);font-weight:800;line-height:.95;
-  letter-spacing:-.05em;font-variant-numeric:tabular-nums;color:var(--text);
-  transition:color .12s var(--ease);
-}
-.timer.holding{color:var(--ready)}
-.timer.running{color:var(--go)}
-.timer-hint{position:relative;font-size:.83rem;color:var(--muted-2);text-align:center;margin-top:6px;min-height:22px}
-.timer-hint strong{color:var(--accent);font-weight:600}
+  ol.solves{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; }
+  ol.solves li{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:9px 12px; font-family:var(--mono); font-size:14px; font-variant-numeric:tabular-nums;
+  }
+  ol.solves li .idx{ color:var(--dim); font-size:11px; min-width:28px; }
+  ol.solves li .v{ flex:1; }
+  ol.solves li .tag{ font-size:10px; letter-spacing:.8px; color:var(--warn); text-transform:uppercase; }
+  ol.solves li.pb{ border-color:color-mix(in srgb, var(--warn) 55%, var(--line)); }
+  .empty{ color:var(--dim); font-size:13px; text-align:center; padding:18px; }
 
-/* =========================================================
-   Statistik
-   ========================================================= */
-.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0}
-.stat{
-  border:1px solid var(--border);border-radius:12px;background:var(--surface);
-  padding:12px 14px;transition:background .25s var(--ease),border-color .25s var(--ease);
-}
-.stat span{
-  display:block;font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--muted-2);font-family:"JetBrains Mono",monospace;margin-bottom:3px;white-space:nowrap;
-}
-.stat strong{
-  font-family:"JetBrains Mono",monospace;font-size:1.15rem;font-weight:700;
-  font-variant-numeric:tabular-nums;letter-spacing:-.02em;
-}
-.stat.best strong{color:var(--accent)}
-.stat.dnf strong{color:var(--danger)}
+  .toast{
+    position:fixed; left:50%; bottom:26px; transform:translate(-50%, 140%);
+    background:var(--card); border:1px solid var(--warn); color:var(--fg);
+    padding:13px 18px; border-radius:12px; font-size:13.5px; font-weight:600;
+    box-shadow:0 14px 40px -10px rgba(0,0,0,.7), 0 0 30px -10px var(--warn);
+    max-width:min(92vw, 420px); text-align:center; z-index:60;
+    transition:transform .38s cubic-bezier(.2,.9,.2,1), opacity .3s; opacity:0;
+    pointer-events:none;
+  }
+  .toast.show{ transform:translate(-50%,0); opacity:1; }
+  .toast .ttl{ color:var(--warn); letter-spacing:.6px; }
+  .toast small{ display:block; margin-top:4px; font-weight:500; color:var(--dim); font-family:var(--mono); font-size:11.5px; }
 
-/* =========================================================
-   Riwayat
-   ========================================================= */
-.solves{
-  border:1px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);overflow:hidden;
-  transition:background .25s var(--ease),border-color .25s var(--ease);
-}
-.solves-head{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--border)}
-.solves-head h2{font-size:.88rem;font-weight:700}
-.solves-meta{font-size:.76rem;color:var(--muted-2);margin-left:4px}
-.solves-head .mini-btn{margin-left:auto}
-.solve-list{max-height:420px;overflow-y:auto;scrollbar-width:thin}
-.solve-list::-webkit-scrollbar{width:8px}
-.solve-list::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:8px}
-.solve{
-  display:grid;grid-template-columns:44px 1fr 86px auto;align-items:center;gap:10px;
-  padding:9px 18px;border-bottom:1px solid var(--border);
-  font-family:"JetBrains Mono",monospace;font-size:.9rem;
-  transition:background .15s var(--ease);
-}
-.solve:last-child{border-bottom:none}
-.solve:hover{background:var(--surface-2)}
-.s-idx{color:var(--muted-2);font-size:.76rem;text-align:right}
-.s-time{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.s-time.plus2{color:var(--ready)}
-.s-time.dnf{color:var(--danger);text-decoration:line-through;text-decoration-thickness:1.5px}
-.s-ao{font-size:.78rem;color:var(--muted-2);font-variant-numeric:tabular-nums;text-align:right}
-.s-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s var(--ease)}
-.solve:hover .s-actions,.solve:focus-within .s-actions{opacity:1}
-.s-actions button{
-  border:1px solid var(--border);background:var(--surface-2);color:var(--muted);
-  border-radius:6px;padding:3px 7px;font-size:.68rem;font-weight:700;
-  font-family:"JetBrains Mono",monospace;
-  transition:color .15s var(--ease),border-color .15s var(--ease);
-}
-.s-actions button:hover{color:var(--text);border-color:var(--border-2)}
-.s-actions button.on{border-color:var(--ready);color:var(--ready)}
-.s-actions button.dnf.on{border-color:var(--danger);color:var(--danger)}
-.s-actions button.del:hover{color:var(--danger);border-color:var(--danger)}
-.empty{padding:38px 20px;text-align:center;color:var(--muted-2);font-size:.85rem}
+  .sheet{
+    position:fixed; inset:0; z-index:70; display:none;
+    background:rgba(0,0,0,.55); backdrop-filter:blur(4px);
+  }
+  .sheet.open{ display:block; }
+  .panel{
+    position:absolute; right:0; top:0; bottom:0; width:min(360px, 88vw);
+    background:var(--card); border-left:1px solid var(--line);
+    padding:18px 18px 30px; overflow-y:auto;
+    animation:slideIn .28s ease;
+  }
+  @keyframes slideIn{ from{ transform:translateX(20px); opacity:0; } }
+  .panel h3{ margin:0 0 16px; font-size:13px; letter-spacing:1.4px; text-transform:uppercase; color:var(--dim); }
+  .row{ margin-bottom:14px; }
+  .row label{ display:block; font-size:12px; color:var(--dim); margin-bottom:6px; letter-spacing:.5px; }
+  .row .sel, .row input[type="file"]{ width:100%; }
+  .row input[type="file"]{ font-size:12px; color:var(--dim); }
+  .switch{ display:flex; justify-content:space-between; align-items:center; }
+  .switch input{ width:18px; height:18px; accent-color:var(--accent); }
+  .btn{
+    width:100%; padding:11px; border-radius:10px; border:1px solid var(--line);
+    background:transparent; font-weight:600; font-size:13px; cursor:pointer;
+    transition:border-color .2s, color .2s;
+  }
+  .btn:hover{ border-color:var(--accent); color:var(--accent); }
+  .btn.danger:hover{ border-color:var(--bad); color:var(--bad); }
+  .sep{ height:1px; background:var(--line); margin:18px 0; }
+  .close{ position:absolute; top:14px; right:14px; }
 
-/* =========================================================
-   Footer & toast
-   ========================================================= */
-.foot{padding:18px 0 40px}
-.shortcuts{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:.76rem;color:var(--muted-2)}
-.shortcuts span{display:inline-flex;align-items:center;gap:6px}
-.toast{
-  position:fixed;left:50%;bottom:24px;z-index:200;
-  transform:translate(-50%,14px);opacity:0;visibility:hidden;
-  padding:10px 18px;border-radius:10px;
-  border:1px solid var(--border-2);background:var(--surface-2);color:var(--text);
-  font-size:.82rem;font-weight:600;box-shadow:var(--shadow);
-  transition:opacity .25s var(--ease),transform .25s var(--ease),visibility .25s;
-}
-.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+  /* ===== Efek kaca buram (aktif hanya saat latar foto) ===== */
+  html[data-bg="photo"] .scr,
+  html[data-bg="photo"] .stage,
+  html[data-bg="photo"] .card,
+  html[data-bg="photo"] ol.solves li,
+  html[data-bg="photo"] .sel,
+  html[data-bg="photo"] .icon,
+  html[data-bg="photo"] .toast,
+  html[data-bg="photo"] .panel{
+    background:color-mix(in srgb, var(--card) 52%, transparent);
+    -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+    backdrop-filter:blur(var(--glass-blur)) saturate(150%);
+    border-color:color-mix(in srgb, var(--fg) 16%, transparent);
+    box-shadow:inset 0 1px 0 color-mix(in srgb, var(--fg) 9%, transparent);
+  }
+  html[data-bg="photo"] .toast{
+    box-shadow:0 14px 40px -10px rgba(0,0,0,.7), 0 0 30px -10px var(--warn),
+               inset 0 1px 0 color-mix(in srgb, var(--fg) 9%, transparent);
+  }
+  html[data-bg="photo"] ol.solves li.empty{
+    background:transparent; border-color:transparent;
+    -webkit-backdrop-filter:none; backdrop-filter:none; box-shadow:none;
+  }
+  html[data-bg="photo"] .panel{ background:color-mix(in srgb, var(--card) 72%, transparent); }
 
-/* =========================================================
-   Responsif
-   ========================================================= */
-@media (max-width:820px){
-  .topbar-inner{height:auto;flex-wrap:wrap;padding:10px 0;gap:10px}
-  .puzzle-tabs{margin-left:0;order:3;width:100%;justify-content:space-between}
-  .puzzle-tab{flex:1;text-align:center;padding:7px 8px}
-  .topbar-tools{margin-left:auto}
-  .stats{grid-template-columns:repeat(3,1fr)}
-  .timer-stage{min-height:280px;padding:34px 16px 30px}
-  .solve{grid-template-columns:34px 1fr 62px auto;padding:9px 12px;gap:8px}
-  .s-ao{font-size:.72rem}
-  .solve-list{max-height:360px}
-}
-@media (hover:none){
-  .s-actions{opacity:1}
-}
-@media (max-width:520px){
-  .stats{grid-template-columns:repeat(2,1fr)}
-  .stat{padding:10px 12px}
-  .stat strong{font-size:1rem}
-  .solves-head{padding:12px}
-  .scramble-card{padding:14px}
-  .s-ao{display:none}
-  .solve{grid-template-columns:30px 1fr auto}
-  .theme-menu{width:210px}
-}
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}
-}
+  /* ===== Mode timer penuh (zen) ===== */
+  html.zen, html.zen body{ overflow:hidden; }
+  html.zen .wrap{ max-width:none; padding:0; }
+  html.zen .top, html.zen .scr, html.zen .stats, html.zen .listwrap{ display:none; }
+  html.zen .stage{
+    position:fixed; inset:0; margin:0; padding:0; border:0; border-radius:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:transparent; box-shadow:none; z-index:50; max-width:none;
+    -webkit-backdrop-filter:none; backdrop-filter:none;
+  }
+  html.zen .time{ font-size:clamp(52px, 17vw, 220px); letter-spacing:-3px; }
+  html.zen .hint{ margin-top:18px; font-size:13px; }
+  #zenExit{ display:none; position:fixed; top:14px; right:14px; z-index:80; }
+  html.zen #zenExit{ display:inline-flex; }
 </style>
 </head>
 <body>
-
-<header class="topbar">
-  <div class="wrap topbar-inner">
+<div class="wrap">
+  <header class="top">
     <div class="brand">
-      <span class="brand-cube" aria-hidden="true"></span>
-      <span>Rubik Timer</span>
+      <span class="cube"><i></i><i></i><i></i><i></i></span>
+      RUBIK TIMER
+    </div>
+    <div class="tools">
+      <select class="sel" id="puzzle" aria-label="Puzzle">
+        <option value="3x3">3x3</option>
+        <option value="2x2">2x2</option>
+      </select>
+      <button class="icon" id="btnZen" title="Timer penuh layar" aria-label="Perbesar timer hingga penuh layar" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 15v5h-5"/><path d="M15 4h5v5"/><path d="M9 20H4v-5"/></svg>
+        <span class="lbl">Penuh</span>
+      </button>
+      <button class="icon" id="btnNew" title="Scramble baru" aria-label="Scramble baru">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 12a8.5 8.5 0 1 1-2.9-6.4"/><path d="M21 4v6h-6"/></svg>
+        <span class="lbl">Acak</span>
+      </button>
+      <button class="icon" id="btnSettings" title="Pengaturan" aria-label="Pengaturan">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.2 5.2l2.1 2.1M16.7 16.7l2.1 2.1M18.8 5.2l-2.1 2.1M7.3 16.7l-2.1 2.1"/></svg>
+        <span class="lbl">Atur</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="scr" id="scr">—</div>
+
+  <section class="stage" id="stage" tabindex="0" aria-live="polite">
+    <div class="time" id="time">0.00</div>
+    <div class="hint" id="hint">tahan spasi / tap untuk mulai</div>
+  </section>
+
+  <div class="stats">
+    <div class="card" id="cardBest"><span>Best</span><b id="statBest">—</b></div>
+    <div class="card" id="cardAo5"><span>ao5</span><b id="statAo5">—</b></div>
+    <div class="card" id="cardAo12"><span>ao12</span><b id="statAo12">—</b></div>
+  </div>
+
+  <div class="listwrap">
+    <div class="listhead">
+      <h2>Riwayat</h2>
+      <button class="link" id="btnDelLast">hapus terakhir</button>
+    </div>
+    <ol class="solves" id="list"></ol>
+  </div>
+</div>
+
+<button class="icon" id="zenExit" title="Keluar mode timer penuh" aria-label="Keluar mode timer penuh">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+</button>
+
+<div class="toast" id="toast" role="status" aria-live="assertive"></div>
+
+<div class="sheet" id="sheet">
+  <div class="panel">
+    <button class="icon close" id="btnClose" title="Tutup" aria-label="Tutup">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6L6 18"/></svg>
+    </button>
+    <h3>Pengaturan</h3>
+
+    <div class="row">
+      <label for="theme">Tema</label>
+      <select class="sel" id="theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+        <option value="midnight">Midnight</option>
+        <option value="nord">Nord</option>
+        <option value="forest">Forest</option>
+        <option value="sunset">Sunset</option>
+        <option value="mono">Mono</option>
+      </select>
     </div>
 
-    <div class="puzzle-tabs" id="puzzleTabs" role="tablist" aria-label="Jenis kubus">
-      <button class="puzzle-tab" role="tab" data-puzzle="2x2">2×2</button>
-      <button class="puzzle-tab active" role="tab" data-puzzle="3x3" aria-selected="true">3×3</button>
-      <button class="puzzle-tab" role="tab" data-puzzle="4x4">4×4</button>
-      <button class="puzzle-tab" role="tab" data-puzzle="5x5">5×5</button>
+    <div class="row">
+      <label for="font">Font</label>
+      <select class="sel" id="font">
+        <option value="auto">Auto (sans)</option>
+        <option value="mono">Mono</option>
+        <option value="serif">Serif</option>
+        <option value="rounded">Rounded</option>
+        <option value="condensed">Condensed</option>
+      </select>
     </div>
 
-    <div class="topbar-tools">
-      <label class="toggle" title="Aktifkan hitungan inspeksi 15 detik">
-        <input type="checkbox" id="inspectionToggle" checked>
-        <span class="switch-track" aria-hidden="true"></span>
-        Inspeksi
-      </label>
+    <div class="row">
+      <label for="bg">Latar</label>
+      <select class="sel" id="bg">
+        <option value="none">Polos</option>
+        <option value="grid">Grid</option>
+        <option value="photo">Foto (kaca buram)</option>
+      </select>
+    </div>
 
-      <div class="theme-picker">
-        <button class="icon-btn" id="themeBtn" aria-label="Ganti tema tampilan"
-                aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu" title="Ganti tema (T)">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 3a9 9 0 0 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-4-4-7.4-9-7.4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-            <circle cx="8.2" cy="10.2" r="1.15" fill="currentColor"/>
-            <circle cx="12" cy="7.6" r="1.15" fill="currentColor"/>
-            <circle cx="15.8" cy="10.2" r="1.15" fill="currentColor"/>
-          </svg>
-        </button>
+    <div class="row" id="rowPhoto" style="display:none">
+      <label for="photo">Foto latar</label>
+      <input type="file" id="photo" accept="image/*">
+      <button class="btn" id="btnClearPhoto" style="margin-top:8px">Hapus foto</button>
+    </div>
 
-        <div class="theme-menu" id="themeMenu" role="listbox" aria-label="Pilih tema" hidden>
-          <button class="theme-opt" role="option" data-theme="dark" aria-selected="true">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#101218"></span>
-              <span class="swatch" style="background:#4dd4ff"></span>
-              <span class="swatch" style="background:#34e08a"></span>
-            </span>
-            <span class="theme-name">Gelap</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="light" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#ffffff"></span>
-              <span class="swatch" style="background:#0a9fc4"></span>
-              <span class="swatch" style="background:#0f9159"></span>
-            </span>
-            <span class="theme-name">Terang</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="neon" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#150c24"></span>
-              <span class="swatch" style="background:#ff3df0"></span>
-              <span class="swatch" style="background:#00ffb3"></span>
-            </span>
-            <span class="theme-name">Neon</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="ocean" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#082330"></span>
-              <span class="swatch" style="background:#35d0ff"></span>
-              <span class="swatch" style="background:#2ee6a8"></span>
-            </span>
-            <span class="theme-name">Samudra</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="sunset" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#26121a"></span>
-              <span class="swatch" style="background:#ff8a4c"></span>
-              <span class="swatch" style="background:#ffd166"></span>
-            </span>
-            <span class="theme-name">Senja</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="forest" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#0d1c14"></span>
-              <span class="swatch" style="background:#5dff9b"></span>
-              <span class="swatch" style="background:#b6ff5d"></span>
-            </span>
-            <span class="theme-name">Rimba</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-          <button class="theme-opt" role="option" data-theme="mono" aria-selected="false">
-            <span class="swatches" aria-hidden="true">
-              <span class="swatch" style="background:#171717"></span>
-              <span class="swatch" style="background:#e8e8e8"></span>
-              <span class="swatch" style="background:#9a9a9a"></span>
-            </span>
-            <span class="theme-name">Mono</span>
-            <span class="theme-check" aria-hidden="true">✓</span>
-          </button>
-        </div>
-      </div>
+    <div class="row switch">
+      <label for="ins" style="margin:0">Inspeksi 15 detik</label>
+      <input type="checkbox" id="ins">
+    </div>
+
+    <div class="sep"></div>
+
+    <div class="row">
+      <button class="btn danger" id="btnReset">Reset semua rekor</button>
+    </div>
+    <div class="row">
+      <button class="btn" id="btnFull">Layar penuh</button>
     </div>
   </div>
-</header>
-
-<main class="main">
-  <div class="wrap">
-
-    <section class="scramble-card" aria-label="Scramble">
-      <div class="scramble-head">
-        <span class="scramble-label" id="scrambleLabel">Scramble · 3×3</span>
-        <div class="scramble-actions">
-          <button class="mini-btn" id="copyBtn" title="Salin scramble">
-            <svg viewBox="0 0 24 24" fill="none" width="13" height="13" aria-hidden="true">
-              <rect x="9" y="9" width="11" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M5 15V6a2 2 0 0 1 2-2h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-            Salin
-          </button>
-          <button class="mini-btn" id="newScrambleBtn" title="Buat scramble baru">
-            <svg viewBox="0 0 24 24" fill="none" width="13" height="13" aria-hidden="true">
-              <path d="M20 11a8 8 0 1 0-2.3 5.7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M20 5v6h-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            Acak baru <kbd>N</kbd>
-          </button>
-        </div>
-      </div>
-      <p class="scramble" id="scrambleText">—</p>
-    </section>
-
-    <section class="timer-stage" id="timerStage" aria-label="Timer">
-      <div class="inspection" id="inspection" hidden>15</div>
-      <div class="timer" id="timer" aria-live="off">0.00</div>
-      <p class="timer-hint" id="timerHint">Tahan <kbd>Spasi</kbd> atau sentuh layar, lepaskan untuk mulai</p>
-    </section>
-
-    <section class="stats" aria-label="Statistik sesi">
-      <div class="stat best"><span>Terbaik</span><strong id="statBest">—</strong></div>
-      <div class="stat"><span>ao5</span><strong id="statAo5">—</strong></div>
-      <div class="stat"><span>ao12</span><strong id="statAo12">—</strong></div>
-      <div class="stat"><span>Rata-rata</span><strong id="statMean">—</strong></div>
-      <div class="stat"><span>Solusi</span><strong id="statCount">0</strong></div>
-    </section>
-
-    <section class="solves" aria-label="Riwayat solusi">
-      <div class="solves-head">
-        <h2>Riwayat</h2>
-        <span class="solves-meta" id="solvesMeta">3×3</span>
-        <button class="mini-btn" id="clearBtn">Hapus semua</button>
-      </div>
-      <ul class="solve-list" id="solveList"></ul>
-      <p class="empty" id="emptyState">Belum ada solusi. Tekan spasi untuk memulai.</p>
-    </section>
-
-    <footer class="foot">
-      <div class="shortcuts">
-        <span><kbd>Spasi</kbd> mulai / berhenti</span>
-        <span><kbd>N</kbd> scramble baru</span>
-        <span><kbd>T</kbd> ganti tema</span>
-        <span><kbd>Esc</kbd> batal</span>
-        <span><kbd>Del</kbd> hapus solusi terakhir</span>
-      </div>
-    </footer>
-  </div>
-</main>
-
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
 
 <script>
-(function () {
+(() => {
   "use strict";
 
-  /* =========================================================
-     Konfigurasi
-     ========================================================= */
-  var STORAGE_KEY = "rubiktimer.v1";
-  var HOLD_MS = 300;
-  var INSPECTION_SEC = 15;
-  var INSPECTION_DNF_SEC = 17;
+  const $ = (s) => document.querySelector(s);
+  const KEY = "rubiktimer.v1";
+  const MAX_SOLVES = 500;          // ponytail: simpan 500 solve terakhir; PB disimpan terpisah jadi tidak hilang
+  const HOLD_MS = 300;             // tahan sebelum siap
+  const INSPECT_MS = 15000;
 
-  /* Tema yang tersedia: kunci harus sama dengan data-theme di CSS */
-  var THEMES = {
-    dark:   { name: "Gelap",   color: "#08090c" },
-    light:  { name: "Terang",  color: "#f5f7fa" },
-    neon:   { name: "Neon",    color: "#0a0616" },
-    ocean:  { name: "Samudra", color: "#04141c" },
-    sunset: { name: "Senja",   color: "#170a10" },
-    forest: { name: "Rimba",   color: "#08120d" },
-    mono:   { name: "Mono",    color: "#0d0d0d" }
+  const el = {
+    scr: $("#scr"), stage: $("#stage"), time: $("#time"), hint: $("#hint"),
+    list: $("#list"), toast: $("#toast"), sheet: $("#sheet"),
+    statBest: $("#statBest"), statAo5: $("#statAo5"), statAo12: $("#statAo12"),
+    cardBest: $("#cardBest"), cardAo5: $("#cardAo5"), cardAo12: $("#cardAo12"),
+    puzzle: $("#puzzle"), theme: $("#theme"), font: $("#font"), bg: $("#bg"),
+    ins: $("#ins"), photo: $("#photo"), rowPhoto: $("#rowPhoto"),
+    btnZen: $("#btnZen"), zenExit: $("#zenExit")
   };
 
-  var PUZZLES = {
-    "2x2": { label: "2×2", len: 11, faces: ["R", "U", "F"], suffixes: ["", "'", "2"] },
-    "3x3": { label: "3×3", len: 21, faces: ["R", "L", "U", "D", "F", "B"], suffixes: ["", "'", "2"] },
-    "4x4": { label: "4×4", len: 40, faces: ["R","L","U","D","F","B","Rw","Lw","Uw","Dw","Fw","Bw"], suffixes: ["", "'", "2"] },
-    "5x5": { label: "5×5", len: 60, faces: ["R","L","U","D","F","B","Rw","Lw","Uw","Dw","Fw","Bw"], suffixes: ["", "'", "2"] }
+  const DEFAULTS = {
+    theme: "dark", font: "auto", bg: "none", ins: false, puzzle: "3x3",
+    solves: [], pb: { single: null, ao5: null, ao12: null }, photo: null
   };
 
-  var AXIS = { R: "x", L: "x", U: "y", D: "y", F: "z", B: "z" };
+  let S = load();
+  let phase = "idle";      // idle | inspect | hold | ready | running
+  let startAt = 0, rafId = 0, holdTimer = 0, inspectTimer = 0, inspectLeft = 0;
 
-  /* =========================================================
-     State
-     ========================================================= */
-  var app = {
-    puzzle: "3x3",
-    inspection: true,
-    theme: "dark",
-    solves: { "2x2": [], "3x3": [], "4x4": [], "5x5": [] }
-  };
-
-  var phase = "idle";
-  var holdReady = false;
-  var holdTimer = null;
-  var inspStart = 0;
-  var inspRaf = null;
-  var solveStart = 0;
-  var solveRaf = null;
-  var currentScramble = "";
-  var pendingPenalty = 0;
-
-  /* =========================================================
-     Elemen
-     ========================================================= */
-  var $ = function (s) { return document.querySelector(s); };
-
-  var elStage = $("#timerStage");
-  var elTimer = $("#timer");
-  var elInspection = $("#inspection");
-  var elHint = $("#timerHint");
-  var elScramble = $("#scrambleText");
-  var elScrambleLabel = $("#scrambleLabel");
-  var elList = $("#solveList");
-  var elEmpty = $("#emptyState");
-  var elMeta = $("#solvesMeta");
-  var elToast = $("#toast");
-  var elInspectionToggle = $("#inspectionToggle");
-
-  var elStatBest = $("#statBest");
-  var elStatAo5 = $("#statAo5");
-  var elStatAo12 = $("#statAo12");
-  var elStatMean = $("#statMean");
-  var elStatCount = $("#statCount");
-
-  var elThemeBtn = $("#themeBtn");
-  var elThemeMenu = $("#themeMenu");
-  var themeOpts = Array.prototype.slice.call(elThemeMenu.querySelectorAll(".theme-opt"));
-
-  var toastTimer = null;
-
-  /* =========================================================
-     Utilitas
-     ========================================================= */
-  function pad2(n) { return n < 10 ? "0" + n : String(n); }
-
-  function fmt(ms) {
-    if (ms === null || ms === undefined) return "—";
-    if (!isFinite(ms)) return "DNF";
-    if (ms < 0) ms = 0;
-    var total = Math.floor(ms);
-    var m = Math.floor(total / 60000);
-    var s = Math.floor(total / 1000) % 60;
-    var cs = Math.floor(total / 10) % 100;
-    if (m > 0) return m + ":" + pad2(s) + "." + pad2(cs);
-    return s + "." + pad2(cs);
-  }
-
-  function showToast(msg) {
-    elToast.textContent = msg;
-    elToast.classList.add("show");
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function () { elToast.classList.remove("show"); }, 2400);
-  }
-
-  function effective(solve) {
-    if (solve.penalty === "DNF") return Infinity;
-    return solve.ms + (solve.penalty === 2 ? 2000 : 0);
-  }
-
-  /* =========================================================
-     Tema
-     ========================================================= */
-  function applyTheme(key, opts) {
-    var options = opts || {};
-    if (!THEMES[key]) key = "dark";
-
-    app.theme = key;
-    document.documentElement.dataset.theme = key;
-
-    var meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", THEMES[key].color);
-
-    themeOpts.forEach(function (btn) {
-      btn.setAttribute("aria-selected", String(btn.dataset.theme === key));
-    });
-
-    if (options.persist !== false) save();
-
-    if (options.announce) {
-      showToast("Tema: " + THEMES[key].name);
-    }
-  }
-
-  function openThemeMenu() {
-    elThemeMenu.hidden = false;
-    elThemeBtn.setAttribute("aria-expanded", "true");
-    var active = elThemeMenu.querySelector('.theme-opt[aria-selected="true"]');
-    if (active) active.focus();
-  }
-
-  function closeThemeMenu(restoreFocus) {
-    if (elThemeMenu.hidden) return;
-    elThemeMenu.hidden = true;
-    elThemeBtn.setAttribute("aria-expanded", "false");
-    if (restoreFocus) elThemeBtn.focus();
-  }
-
-  function toggleThemeMenu() {
-    if (elThemeMenu.hidden) openThemeMenu();
-    else closeThemeMenu();
-  }
-
-  elThemeBtn.addEventListener("click", function (e) {
-    e.stopPropagation();
-    toggleThemeMenu();
-  });
-
-  elThemeMenu.addEventListener("click", function (e) {
-    var opt = e.target.closest(".theme-opt");
-    if (!opt) return;
-    applyTheme(opt.dataset.theme, { announce: true });
-    closeThemeMenu(true);
-  });
-
-  elThemeMenu.addEventListener("keydown", function (e) {
-    var index = themeOpts.indexOf(document.activeElement);
-
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      if (index < 0) index = themeOpts.findIndex(function (b) {
-        return b.dataset.theme === app.theme;
-      });
-      var step = e.key === "ArrowDown" ? 1 : -1;
-      var next = (index + step + themeOpts.length) % themeOpts.length;
-      themeOpts[next].focus();
-      return;
-    }
-
-    if (e.key === "Escape") {
-      e.preventDefault();
-      closeThemeMenu(true);
-    }
-  });
-
-  document.addEventListener("click", function (e) {
-    if (!e.target.closest(".theme-picker")) closeThemeMenu();
-  });
-
-  /* =========================================================
-     Penyimpanan
-     ========================================================= */
-  function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(app)); }
-    catch (e) { /* mode privat / kuota penuh */ }
-  }
-
+  /* ---------- storage ---------- */
   function load() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
-      var data = JSON.parse(raw);
-      if (!data || typeof data !== "object") return;
-
-      if (data.puzzle && PUZZLES[data.puzzle]) app.puzzle = data.puzzle;
-      if (typeof data.inspection === "boolean") app.inspection = data.inspection;
-      if (typeof data.theme === "string" && THEMES[data.theme]) app.theme = data.theme;
-
-      if (data.solves && typeof data.solves === "object") {
-        Object.keys(PUZZLES).forEach(function (key) {
-          var list = data.solves[key];
-          if (Array.isArray(list)) {
-            app.solves[key] = list.filter(function (s) {
-              return s && typeof s.ms === "number" && isFinite(s.ms);
-            }).slice(-1000);
-          }
-        });
-      }
-    } catch (e) { /* data korup — abaikan */ }
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return structuredClone(DEFAULTS);
+      const p = JSON.parse(raw);
+      return {
+        ...DEFAULTS, ...p,
+        pb: { ...DEFAULTS.pb, ...(p.pb || {}) },
+        solves: Array.isArray(p.solves) ? p.solves : []
+      };
+    } catch { return structuredClone(DEFAULTS); }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(S)); }
+    catch { toast("Penyimpanan penuh", "riwayat tidak tersimpan"); }
   }
 
-  /* =========================================================
-     Scramble
-     ========================================================= */
-  function baseFace(move) {
-    return move.replace(/w/g, "").replace(/^\d+/, "").charAt(0);
+  /* ---------- format & statistik ---------- */
+  function fmt(ms) {
+    if (ms == null || !isFinite(ms)) return "—";
+    const t = Math.max(0, Math.round(ms));
+    const m = Math.floor(t / 60000);
+    const s = Math.floor((t % 60000) / 1000);
+    const c = Math.floor((t % 1000) / 10);
+    const ss = String(s).padStart(m ? 2 : 1, "0");
+    return m
+      ? `${m}:${String(s).padStart(2, "0")}.${String(c).padStart(2, "0")}`
+      : `${ss}.${String(c).padStart(2, "0")}`;
   }
 
-  function generateScramble(puzzleKey) {
-    var cfg = PUZZLES[puzzleKey];
-    var result = [];
-    var lastFace = null;
-    var lastAxis = null;
-    var axisRun = 0;
-    var guard = 0;
+  function avg(list, n) {
+    if (list.length < n) return null;
+    const part = list.slice(0, n);
+    const sorted = [...part].sort((a, b) => a - b);
+    const trimmed = sorted.slice(1, -1);
+    return trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+  }
 
-    while (result.length < cfg.len && guard < 5000) {
-      guard++;
-      var face = cfg.faces[Math.floor(Math.random() * cfg.faces.length)];
-      var base = baseFace(face);
-      var axis = AXIS[base] || "?";
-
-      if (base === lastFace) continue;
-      if (axis === lastAxis && axisRun >= 2) continue;
-
-      if (axis === lastAxis) axisRun++;
-      else axisRun = 1;
-
-      lastAxis = axis;
-      lastFace = base;
-
-      var suffix = cfg.suffixes[Math.floor(Math.random() * cfg.suffixes.length)];
-      result.push(face + suffix);
+  /* ---------- scramble ---------- */
+  const AXIS = { R: 0, L: 0, U: 1, D: 1, F: 2, B: 2 };
+  const SUF = ["", "'", "2"];
+  function scramble(n, faces) {
+    const out = [];
+    let prevAxis = -1, prevFace = "";
+    while (out.length < n) {
+      const f = faces[(Math.random() * faces.length) | 0];
+      if (AXIS[f] === prevAxis || f === prevFace) continue;
+      prevAxis = AXIS[f]; prevFace = f;
+      out.push(f + SUF[(Math.random() * 3) | 0]);
     }
-
-    return result.join(" ");
+    return out.join(" ");
   }
-
   function newScramble() {
-    currentScramble = generateScramble(app.puzzle);
-    elScramble.textContent = currentScramble;
-    elScrambleLabel.textContent = "Scramble · " + PUZZLES[app.puzzle].label;
+    const is2 = S.puzzle === "2x2";
+    el.scr.textContent = scramble(is2 ? 11 : 20, is2 ? ["R", "U", "F"] : ["R", "L", "U", "D", "F", "B"]);
+    el.scr.classList.remove("done");
   }
 
-  /* =========================================================
-     Statistik
-     ========================================================= */
-  function aoAt(list, n, endIndex) {
-    if (endIndex + 1 < n) return null;
-    var slice = [];
-    for (var i = endIndex - n + 1; i <= endIndex; i++) slice.push(effective(list[i]));
-
-    var dnfCount = 0;
-    for (var j = 0; j < slice.length; j++) if (slice[j] === Infinity) dnfCount++;
-    if (dnfCount > 1) return Infinity;
-
-    slice.sort(function (a, b) { return a - b; });
-    var trimmed = slice.slice(1, slice.length - 1);
-    var sum = 0;
-    for (var k = 0; k < trimmed.length; k++) sum += trimmed[k];
-    return sum / trimmed.length;
-  }
-
-  function computeStats(list) {
-    var stats = { best: null, ao5: null, ao12: null, mean: null, count: list.length };
-    if (!list.length) return stats;
-
-    var best = Infinity;
-    var sum = 0;
-    var valid = 0;
-
-    for (var i = 0; i < list.length; i++) {
-      var t = effective(list[i]);
-      if (t === Infinity) continue;
-      if (t < best) best = t;
-      sum += t;
-      valid++;
-    }
-
-    stats.best = isFinite(best) ? best : null;
-    stats.mean = valid ? sum / valid : null;
-
-    var last = list.length - 1;
-    stats.ao5 = aoAt(list, 5, last);
-    stats.ao12 = aoAt(list, 12, last);
-    return stats;
-  }
-
+  /* ---------- render ---------- */
   function renderStats() {
-    var list = app.solves[app.puzzle];
-    var s = computeStats(list);
-
-    elStatBest.textContent = s.best !== null ? fmt(s.best) : "—";
-    elStatAo5.textContent = s.ao5 === null ? "—" : fmt(s.ao5);
-    elStatAo12.textContent = s.ao12 === null ? "—" : fmt(s.ao12);
-    elStatMean.textContent = s.mean !== null ? fmt(s.mean) : "—";
-    elStatCount.textContent = String(s.count);
-
-    elStatAo5.parentElement.classList.toggle("dnf", s.ao5 === Infinity);
-    elStatAo12.parentElement.classList.toggle("dnf", s.ao12 === Infinity);
+    el.statBest.textContent = fmt(S.pb.single);
+    el.statAo5.textContent = fmt(avg(S.solves, 5));
+    el.statAo12.textContent = fmt(avg(S.solves, 12));
   }
 
-  /* =========================================================
-     Riwayat
-     ========================================================= */
-  function renderSolves() {
-    var list = app.solves[app.puzzle];
-    elMeta.textContent = PUZZLES[app.puzzle].label;
-    elList.innerHTML = "";
-
-    if (!list.length) {
-      elEmpty.hidden = false;
-      renderStats();
+  function renderList() {
+    const items = S.solves;
+    if (!items.length) {
+      el.list.innerHTML = '<li class="empty">Belum ada solve. Tekan spasi untuk mulai.</li>';
       return;
     }
-    elEmpty.hidden = true;
+    el.list.innerHTML = items.slice(0, 50).map((ms, i) => {
+      const n = items.length - i;
+      const isPB = ms === S.pb.single;
+      const tag = isPB ? '<span class="tag">PB</span>' : "";
+      return `<li class="${isPB ? "pb" : ""}">
+        <span class="idx">#${n}</span>
+        <span class="v">${fmt(ms)}</span>${tag}
+      </li>`;
+    }).join("");
+  }
 
-    var frag = document.createDocumentFragment();
-    var start = Math.max(0, list.length - 150);
-    for (var i = list.length - 1; i >= start; i--) frag.appendChild(buildRow(list, i));
-
-    elList.appendChild(frag);
+  function renderAll() {
+    document.documentElement.dataset.theme = S.theme;
+    document.documentElement.dataset.font = S.font;
+    document.documentElement.dataset.bg = S.bg;
+    document.documentElement.style.setProperty("--photo", S.photo ? `url("${S.photo}")` : "none");
+    el.puzzle.value = S.puzzle;
+    el.theme.value = S.theme;
+    el.font.value = S.font;
+    el.bg.value = S.bg;
+    el.ins.checked = !!S.ins;
+    el.rowPhoto.style.display = S.bg === "photo" ? "block" : "none";
     renderStats();
+    renderList();
   }
 
-  function buildRow(list, index) {
-    var solve = list[index];
-    var li = document.createElement("li");
-    li.className = "solve";
-    li.dataset.index = String(index);
+  /* ---------- toast & rekor ---------- */
+  let toastTimer = 0;
+  function toast(title, sub) {
+    el.toast.innerHTML = `<span class="ttl">${title}</span>` + (sub ? `<small>${sub}</small>` : "");
+    el.toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.toast.classList.remove("show"), 3600);
+  }
 
-    var idx = document.createElement("span");
-    idx.className = "s-idx";
-    idx.textContent = String(index + 1);
+  function flashCard(card) {
+    card.classList.add("hit");
+    setTimeout(() => card.classList.remove("hit"), 1600);
+  }
 
-    var time = document.createElement("span");
-    time.className = "s-time";
-    if (solve.penalty === "DNF") {
-      time.classList.add("dnf");
-      time.textContent = fmt(solve.ms);
-    } else if (solve.penalty === 2) {
-      time.classList.add("plus2");
-      time.textContent = fmt(solve.ms + 2000);
-    } else {
-      time.textContent = fmt(solve.ms);
+  // Bandingkan hasil solve baru ke PB tersimpan. Return daftar rekor yang pecah.
+  function checkPB(time) {
+    const hits = [];
+    const pb = S.pb;
+
+    if (pb.single == null || time < pb.single) {
+      hits.push({ kind: "Single", val: time, card: el.cardBest, old: pb.single });
+      pb.single = time;
     }
-    time.title = "Waktu mentah: " + fmt(solve.ms) +
-      (solve.penalty === "DNF" ? " · DNF" : solve.penalty === 2 ? " · +2" : "");
-
-    var ao = document.createElement("span");
-    ao.className = "s-ao";
-    var a5 = aoAt(list, 5, index);
-    ao.textContent = a5 === null ? "" : "ao5 " + fmt(a5);
-
-    var actions = document.createElement("div");
-    actions.className = "s-actions";
-
-    var b2 = document.createElement("button");
-    b2.type = "button";
-    b2.dataset.act = "plus2";
-    b2.textContent = "+2";
-    b2.title = "Tambahkan penalti +2";
-    if (solve.penalty === 2) b2.classList.add("on");
-
-    var bd = document.createElement("button");
-    bd.type = "button";
-    bd.dataset.act = "dnf";
-    bd.className = "dnf";
-    bd.textContent = "DNF";
-    bd.title = "Tandai DNF";
-    if (solve.penalty === "DNF") bd.classList.add("on");
-
-    var bx = document.createElement("button");
-    bx.type = "button";
-    bx.dataset.act = "del";
-    bx.className = "del";
-    bx.textContent = "✕";
-    bx.title = "Hapus solusi ini";
-
-    actions.appendChild(b2);
-    actions.appendChild(bd);
-    actions.appendChild(bx);
-
-    li.appendChild(idx);
-    li.appendChild(time);
-    li.appendChild(ao);
-    li.appendChild(actions);
-    return li;
+    const a5 = avg(S.solves, 5);
+    if (a5 != null && (pb.ao5 == null || a5 < pb.ao5)) {
+      hits.push({ kind: "ao5", val: a5, card: el.cardAo5, old: pb.ao5 });
+      pb.ao5 = a5;
+    }
+    const a12 = avg(S.solves, 12);
+    if (a12 != null && (pb.ao12 == null || a12 < pb.ao12)) {
+      hits.push({ kind: "ao12", val: a12, card: el.cardAo12, old: pb.ao12 });
+      pb.ao12 = a12;
+    }
+    return hits;
   }
 
-  /* =========================================================
-     Timer
-     ========================================================= */
-  function setHint(text) { elHint.innerHTML = text; }
-  function resetHint() {
-    setHint('Tahan <kbd>Spasi</kbd> atau sentuh layar, lepaskan untuk mulai');
+  function announce(hits) {
+    const first = hits[0];
+    const parts = hits.map(h => `${h.kind} ${fmt(h.val)}`);
+
+    el.stage.classList.add("flash");
+    setTimeout(() => el.stage.classList.remove("flash"), 1200);
+    hits.forEach(h => flashCard(h.card));
+    if (navigator.vibrate) { try { navigator.vibrate(hits.length > 1 ? [40, 60, 40] : 55); } catch {} }
+
+    const sub = first.old == null ? "rekor pertama" : `sebelumnya ${fmt(first.old)}`;
+    toast(hits.length > 1 ? `REKOR BARU! ${parts.join(" · ")}` : `REKOR BARU! ${first.kind} ${fmt(first.val)}`, sub);
   }
 
-  function clearHold() {
-    clearTimeout(holdTimer);
-    holdTimer = null;
-    holdReady = false;
-    elStage.classList.remove("holding");
-    elTimer.classList.remove("holding");
+  /* ---------- alur timer ---------- */
+  function setPhase(p) {
+    phase = p;
+    el.stage.classList.toggle("ready", p === "ready");
+    el.stage.classList.toggle("running", p === "running");
+    el.stage.classList.toggle("inspect", p === "inspect");
+    if (p !== "inspect") el.stage.classList.remove("danger");
+  }
+
+  function tick() {
+    el.time.textContent = fmt(performance.now() - startAt);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function startRun() {
+    setPhase("running");
+    el.hint.textContent = "spasi / tap untuk stop";
+    startAt = performance.now();
+    el.time.textContent = "0.00";
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stopRun() {
+    cancelAnimationFrame(rafId);
+    const time = performance.now() - startAt;
+    el.time.textContent = fmt(time);
+    setPhase("idle");
+    el.hint.textContent = "tahan spasi / tap untuk mulai";
+    el.scr.classList.add("done");
+
+    S.solves.unshift(time);
+    if (S.solves.length > MAX_SOLVES) S.solves.length = MAX_SOLVES;
+
+    const hits = checkPB(time);
+    save();
+    renderStats();
+    renderList();
+    if (hits.length) announce(hits);
+    newScramble();
   }
 
   function startHold() {
-    clearHold();
-    holdReady = false;
-    holdTimer = setTimeout(function () {
-      holdReady = true;
-      elStage.classList.add("holding");
-      elTimer.classList.add("holding");
-      setHint("<strong>Lepaskan</strong> untuk memulai");
+    setPhase("hold");
+    el.hint.textContent = "tahan…";
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      if (phase !== "hold") return;
+      setPhase("ready");
+      el.hint.textContent = "lepas untuk mulai";
     }, HOLD_MS);
   }
 
-  function startInspection() {
-    phase = "inspecting";
-    inspStart = performance.now();
-    pendingPenalty = 0;
-    elInspection.hidden = false;
-    elInspection.classList.remove("danger");
-    tickInspection();
-  }
-
-  function tickInspection() {
-    if (phase !== "inspecting") return;
-
-    var elapsed = (performance.now() - inspStart) / 1000;
-    var remaining = INSPECTION_SEC - elapsed;
-
-    if (elapsed >= INSPECTION_DNF_SEC) {
-      elInspection.textContent = "DNF";
-      elInspection.classList.add("danger");
-      pendingPenalty = "DNF";
-    } else if (elapsed >= INSPECTION_SEC) {
-      elInspection.textContent = "+2";
-      elInspection.classList.add("danger");
-      pendingPenalty = 2;
-    } else {
-      elInspection.textContent = String(Math.max(0, Math.ceil(remaining)));
-      elInspection.classList.toggle("danger", remaining <= 3);
+  function cancelHold() {
+    clearTimeout(holdTimer);
+    if (phase === "hold" || phase === "ready") {
+      setPhase(S.ins ? "inspect" : "idle");
+      el.hint.textContent = S.ins ? "inspeksi berjalan — tahan untuk mulai" : "tahan spasi / tap untuk mulai";
     }
-
-    inspRaf = requestAnimationFrame(tickInspection);
   }
 
-  function stopInspectionClock() {
-    if (inspRaf) cancelAnimationFrame(inspRaf);
-    inspRaf = null;
+  function startInspect() {
+    setPhase("inspect");
+    inspectLeft = INSPECT_MS;
+    el.time.textContent = "15";
+    el.hint.textContent = "inspeksi — tahan untuk mulai";
+    clearInterval(inspectTimer);
+    inspectTimer = setInterval(() => {
+      inspectLeft -= 100;
+      const sec = Math.ceil(inspectLeft / 1000);
+      el.time.textContent = String(Math.max(0, sec));
+      el.stage.classList.toggle("danger", sec <= 3);
+      if (inspectLeft <= 0) {
+        clearInterval(inspectTimer);
+        startRun();
+      }
+    }, 100);
   }
 
-  function hideInspection() {
-    stopInspectionClock();
-    elInspection.hidden = true;
-    elInspection.classList.remove("danger");
+  function stopInspect() {
+    clearInterval(inspectTimer);
+    el.stage.classList.remove("danger");
   }
 
-  function startSolve() {
-    stopInspectionClock();
-    hideInspection();
-
-    phase = "running";
-    solveStart = performance.now();
-    elStage.classList.add("running");
-    elTimer.classList.remove("holding");
-    elTimer.classList.add("running");
-    elTimer.textContent = "0.00";
-    setHint("Tekan <strong>Spasi</strong> untuk berhenti");
-    loopSolve();
+  function primaryDown() {
+    if (phase === "idle") {
+      if (S.ins) startInspect();
+      else startHold();
+    } else if (phase === "inspect") {
+      stopInspect();
+      startHold();
+    } else if (phase === "running") {
+      stopRun();
+    }
   }
 
-  function loopSolve() {
-    if (phase !== "running") return;
-    elTimer.textContent = fmt(performance.now() - solveStart);
-    solveRaf = requestAnimationFrame(loopSolve);
+  function primaryUp() {
+    if (phase === "hold") cancelHold();
+    else if (phase === "ready") { setPhase("idle"); startRun(); }
   }
 
-  function stopSolve() {
-    if (phase !== "running") return;
-    if (solveRaf) cancelAnimationFrame(solveRaf);
-    solveRaf = null;
+  /* ---------- mode timer penuh ---------- */
+  function setZen(on) {
+    document.documentElement.classList.toggle("zen", on);
+    el.btnZen.setAttribute("aria-pressed", on ? "true" : "false");
+    if (on) el.stage.focus({ preventScroll: true });
+  }
+  function isZen() { return document.documentElement.classList.contains("zen"); }
 
-    var ms = performance.now() - solveStart;
-    phase = "idle";
+  async function enterFullscreen() {
+    try { if (!document.fullscreenElement) await document.documentElement.requestFullscreen(); } catch {}
+  }
+  async function exitFullscreen() {
+    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {}
+  }
 
-    elStage.classList.remove("running");
-    elTimer.classList.remove("running");
-    elTimer.textContent = fmt(ms);
+  el.btnZen.addEventListener("click", () => {
+    const on = !isZen();
+    setZen(on);
+    if (on) enterFullscreen(); else exitFullscreen();
+  });
 
-    var penalty = pendingPenalty;
-    pendingPenalty = 0;
+  el.zenExit.addEventListener("pointerdown", (e) => e.stopPropagation());
+  el.zenExit.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setZen(false);
+    exitFullscreen();
+  });
 
-    var list = app.solves[app.puzzle];
-    list.push({
-      ms: Math.round(ms),
-      penalty: penalty,
-      scramble: currentScramble,
-      at: Date.now()
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement && isZen()) setZen(false);
+  });
+
+  /* ---------- input ---------- */
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isZen()) { setZen(false); exitFullscreen(); return; }
+    if (e.code !== "Space" && e.key !== " ") return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "select" || tag === "textarea" || tag === "button") return;
+    e.preventDefault();
+    if (e.repeat) return;
+    primaryDown();
+  });
+  window.addEventListener("keyup", (e) => {
+    if (e.code !== "Space" && e.key !== " ") return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "select" || tag === "textarea" || tag === "button") return;
+    e.preventDefault();
+    primaryUp();
+  });
+
+  el.stage.addEventListener("pointerdown", (e) => { e.preventDefault(); primaryDown(); });
+  el.stage.addEventListener("pointerup", (e) => { e.preventDefault(); primaryUp(); });
+  el.stage.addEventListener("pointercancel", () => cancelHold());
+  el.stage.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  /* ---------- toolbar & settings ---------- */
+  $("#btnNew").addEventListener("click", () => { if (phase === "idle") newScramble(); });
+
+  el.puzzle.addEventListener("change", () => {
+    S.puzzle = el.puzzle.value;
+    save(); newScramble(); renderStats();
+  });
+
+  $("#btnSettings").addEventListener("click", () => el.sheet.classList.add("open"));
+  $("#btnClose").addEventListener("click", () => el.sheet.classList.remove("open"));
+  el.sheet.addEventListener("click", (e) => { if (e.target === el.sheet) el.sheet.classList.remove("open"); });
+
+  el.theme.addEventListener("change", () => { S.theme = el.theme.value; save(); renderAll(); });
+  el.font.addEventListener("change", () => { S.font = el.font.value; save(); renderAll(); });
+  el.bg.addEventListener("change", () => { S.bg = el.bg.value; save(); renderAll(); });
+  el.ins.addEventListener("change", () => { S.ins = el.ins.checked; save(); });
+
+  el.photo.addEventListener("change", async () => {
+    const file = el.photo.files && el.photo.files[0];
+    if (!file) return;
+    try {
+      S.photo = await shrink(file);
+      S.bg = "photo";
+      save(); renderAll();
+      toast("Latar foto dipasang", "kaca buram aktif");
+    } catch { toast("Gagal memuat foto", "coba gambar lain"); }
+  });
+
+  $("#btnClearPhoto").addEventListener("click", () => {
+    S.photo = null; S.bg = "none"; el.photo.value = ""; save(); renderAll();
+  });
+
+  // ponytail: resize ke maks 1600px sisi terpanjang, JPEG q0.82 — cukup untuk wallpaper, aman dari kuota localStorage
+  function shrink(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        const max = 1600;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        res(c.toDataURL("image/jpeg", 0.82));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error("decode")); };
+      img.src = url;
     });
-    if (list.length > 1000) list.splice(0, list.length - 1000);
-
-    save();
-    renderSolves();
-    newScramble();
-    resetHint();
-
-    if (penalty === "DNF") showToast("Solusi disimpan sebagai DNF");
-    else if (penalty === 2) showToast("Solusi disimpan dengan penalti +2");
   }
 
-  function cancelAll() {
-    if (phase === "running") {
-      if (solveRaf) cancelAnimationFrame(solveRaf);
-      solveRaf = null;
-      elStage.classList.remove("running");
-      elTimer.classList.remove("running");
-      elTimer.textContent = "0.00";
-    }
-    stopInspectionClock();
-    hideInspection();
-    clearHold();
-    pendingPenalty = 0;
-    phase = "idle";
-    resetHint();
-    showToast("Dibatalkan");
-  }
-
-  /* =========================================================
-     Interaksi timer
-     ========================================================= */
-  function pressDown() {
-    if (phase === "running") { stopSolve(); return; }
-    if (phase === "idle" && app.inspection) startInspection();
-    if (phase === "idle" || phase === "inspecting") startHold();
-  }
-
-  function pressUp() {
-    if (phase === "running") return;
-    var ready = holdReady;
-    clearHold();
-
-    if (ready && (phase === "idle" || phase === "inspecting")) {
-      startSolve();
-    } else if (phase === "inspecting") {
-      setHint('Tahan <kbd>Spasi</kbd> 0,3 detik lalu lepas untuk mulai');
-    }
-  }
-
-  /* Keyboard */
-  document.addEventListener("keydown", function (e) {
-    var tag = (e.target && e.target.tagName) || "";
-    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-
-    if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
-      e.preventDefault();
-      if (e.repeat) return;
-      pressDown();
-      return;
-    }
-
-    if (e.key === "Escape") {
-      if (!elThemeMenu.hidden) { e.preventDefault(); closeThemeMenu(true); return; }
-      e.preventDefault();
-      cancelAll();
-      return;
-    }
-
-    if (e.key === "n" || e.key === "N") {
-      if (phase === "running") return;
-      newScramble();
-      showToast("Scramble baru");
-      return;
-    }
-
-    if (e.key === "t" || e.key === "T") {
-      e.preventDefault();
-      toggleThemeMenu();
-      return;
-    }
-
-    if (e.key === "Delete" || e.key === "Backspace") {
-      if (phase === "running") return;
-      e.preventDefault();
-      var list = app.solves[app.puzzle];
-      if (!list.length) return;
-      list.pop();
-      save();
-      renderSolves();
-      showToast("Solusi terakhir dihapus");
-    }
+  $("#btnDelLast").addEventListener("click", () => {
+    if (!S.solves.length) return;
+    S.solves.shift();
+    save(); renderStats(); renderList();
+    toast("Solve terakhir dihapus", "");
   });
 
-  document.addEventListener("keyup", function (e) {
-    if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
-      e.preventDefault();
-      pressUp();
-    }
+  $("#btnReset").addEventListener("click", () => {
+    if (!confirm("Hapus semua solve dan rekor? Tindakan ini tidak bisa dibatalkan.")) return;
+    S.solves = [];
+    S.pb = { single: null, ao5: null, ao12: null };
+    save(); renderStats(); renderList();
+    toast("Semua data direset", "");
   });
 
-  /* Pointer pada area timer */
-  var pointerActive = false;
-
-  elStage.addEventListener("pointerdown", function (e) {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    pointerActive = true;
-    pressDown();
+  $("#btnFull").addEventListener("click", async () => {
+    try {
+      if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      else await document.exitFullscreen();
+    } catch { toast("Layar penuh tidak didukung", ""); }
   });
 
-  function endPointer() {
-    if (!pointerActive) return;
-    pointerActive = false;
-    pressUp();
-  }
-
-  document.addEventListener("pointerup", endPointer);
-  document.addEventListener("pointercancel", endPointer);
-  elStage.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-
-  /* =========================================================
-     Kontrol UI
-     ========================================================= */
-  document.getElementById("puzzleTabs").addEventListener("click", function (e) {
-    var btn = e.target.closest(".puzzle-tab");
-    if (!btn || phase === "running") return;
-
-    var key = btn.dataset.puzzle;
-    if (!PUZZLES[key]) return;
-
-    app.puzzle = key;
-    save();
-
-    Array.prototype.forEach.call(document.querySelectorAll(".puzzle-tab"), function (b) {
-      var on = b === btn;
-      b.classList.toggle("active", on);
-      if (on) b.setAttribute("aria-selected", "true");
-      else b.removeAttribute("aria-selected");
-    });
-
-    cancelAll();
-    newScramble();
-    renderSolves();
-  });
-
-  document.getElementById("newScrambleBtn").addEventListener("click", function () {
-    if (phase === "running") return;
-    newScramble();
-  });
-
-  document.getElementById("copyBtn").addEventListener("click", function () {
-    var text = currentScramble;
-    if (!text) return;
-
-    function done() { showToast("Scramble disalin"); }
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(fallback);
-    } else {
-      fallback();
-    }
-
-    function fallback() {
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      ta.setAttribute("readonly", "");
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      try { document.execCommand("copy"); done(); }
-      catch (err) { showToast("Gagal menyalin"); }
-      document.body.removeChild(ta);
-    }
-  });
-
-  document.getElementById("clearBtn").addEventListener("click", function () {
-    var list = app.solves[app.puzzle];
-    if (!list.length) { showToast("Riwayat sudah kosong"); return; }
-    if (!window.confirm("Hapus semua solusi untuk " + PUZZLES[app.puzzle].label + "?")) return;
-    app.solves[app.puzzle] = [];
-    save();
-    renderSolves();
-    showToast("Riwayat dihapus");
-  });
-
-  elList.addEventListener("click", function (e) {
-    var btn = e.target.closest("button[data-act]");
-    if (!btn) return;
-
-    var row = btn.closest(".solve");
-    if (!row) return;
-
-    var index = parseInt(row.dataset.index, 10);
-    var list = app.solves[app.puzzle];
-    var solve = list[index];
-    if (!solve) return;
-
-    var act = btn.dataset.act;
-    if (act === "plus2") solve.penalty = solve.penalty === 2 ? 0 : 2;
-    else if (act === "dnf") solve.penalty = solve.penalty === "DNF" ? 0 : "DNF";
-    else if (act === "del") { list.splice(index, 1); showToast("Solusi dihapus"); }
-
-    save();
-    renderSolves();
-  });
-
-  elInspectionToggle.addEventListener("change", function () {
-    app.inspection = elInspectionToggle.checked;
-    save();
-    if (phase === "inspecting") {
-      stopInspectionClock();
-      hideInspection();
-      clearHold();
-      phase = "idle";
-      resetHint();
-    }
-  });
-
-  /* =========================================================
-     Inisialisasi
-     ========================================================= */
-  load();
-
-  applyTheme(app.theme, { persist: false });
-  elInspectionToggle.checked = app.inspection;
-
-  Array.prototype.forEach.call(document.querySelectorAll(".puzzle-tab"), function (b) {
-    var on = b.dataset.puzzle === app.puzzle;
-    b.classList.toggle("active", on);
-    if (on) b.setAttribute("aria-selected", "true");
-    else b.removeAttribute("aria-selected");
-  });
-
+  /* ---------- init ---------- */
+  renderAll();
   newScramble();
-  renderSolves();
-  resetHint();
-  elTimer.textContent = "0.00";
+  el.stage.focus({ preventScroll: true });
 })();
 </script>
 </body>
