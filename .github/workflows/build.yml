@@ -11,6 +11,10 @@ on:
         description: 'Package ID'
         required: true
         default: 'com.bot.webapp'
+      orientation:
+        description: 'Orientasi Layar'
+        required: false
+        default: 'unspecified'
 
 jobs:
   build:
@@ -30,42 +34,77 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Set App Name, Package ID & Icon
+      - name: Set App Name, Package ID, Orientation & All Icons
         env:
           APP_NAME: ${{ github.event.inputs.app_name }}
           PACKAGE_ID: ${{ github.event.inputs.package_id }}
+          ORIENTATION: ${{ github.event.inputs.orientation }}
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq python3-pil
           python3 -c '
-          import os, re, shutil
+          import os, re, shutil, glob
           from PIL import Image
 
           raw_name = os.environ.get("APP_NAME", "WebApp")
           name = re.sub(r"[^a-zA-Z0-9 _-]", "", raw_name).strip() or "WebApp"
           pkg = re.sub(r"[^a-zA-Z0-9._]", "", os.environ.get("PACKAGE_ID", "com.bot.webapp")).strip() or "com.bot.webapp"
+          orient = os.environ.get("ORIENTATION", "unspecified").strip().lower()
+          if orient not in ("portrait", "landscape", "unspecified"):
+              orient = "unspecified"
 
+          # 1. Tulis ulang values/strings.xml
           shutil.rmtree("app/src/main/res/values", ignore_errors=True)
           os.makedirs("app/src/main/res/values", exist_ok=True)
           with open("app/src/main/res/values/strings.xml", "w", encoding="utf-8") as f:
               f.write(f"<resources>\n    <string name=\"app_name\">{name}</string>\n</resources>\n")
 
+          # 2. Perbarui applicationId di app/build.gradle
           with open("app/build.gradle", "r", encoding="utf-8") as f:
               gradle_txt = f.read()
-          gradle_txt = re.sub(r"applicationId\s+\"[^\"]*\"", f"applicationId \"{pkg}\"", gradle_txt)
+          gradle_txt = re.sub(r"applicationId\s+[\"\x27][^\"\x27]*[\"\x27]", f"applicationId \"{pkg}\"", gradle_txt)
           with open("app/build.gradle", "w", encoding="utf-8") as f:
               f.write(gradle_txt)
 
-          os.makedirs("app/src/main/res/mipmap-xxxhdpi", exist_ok=True)
-          out_icon = "app/src/main/res/mipmap-xxxhdpi/ic_launcher.png"
+          # 3. Paksa AndroidManifest.xml memakai @string/app_name, @mipmap/ic_launcher & orientasi
+          manifest_path = "app/src/main/AndroidManifest.xml"
+          if os.path.exists(manifest_path):
+              with open(manifest_path, "r", encoding="utf-8") as f:
+                  manifest = f.read()
+              manifest = re.sub(r"android:label=[\"\x27][^\"\x27]*[\"\x27]", "android:label=\"@string/app_name\"", manifest)
+              manifest = re.sub(r"android:icon=[\"\x27][^\"\x27]*[\"\x27]", "android:icon=\"@mipmap/ic_launcher\"", manifest)
+              manifest = re.sub(r"android:roundIcon=[\"\x27][^\"\x27]*[\"\x27]", "android:roundIcon=\"@mipmap/ic_launcher_round\"", manifest)
+              if "android:screenOrientation=" in manifest:
+                  manifest = re.sub(r"android:screenOrientation=[\"\x27][^\"\x27]*[\"\x27]", f"android:screenOrientation=\"{orient}\"", manifest)
+              elif orient != "unspecified":
+                  manifest = re.sub(r"(<activity\b)", f"\\1 android:screenOrientation=\"{orient}\"", manifest, count=1)
+              with open(manifest_path, "w", encoding="utf-8") as f:
+                  f.write(manifest)
+
+          # 4. Hapus semua folder mipmap lama (termasuk adaptive icon) dan generate ulang semua ukuran
+          for old_dir in glob.glob("app/src/main/res/mipmap*"):
+              shutil.rmtree(old_dir, ignore_errors=True)
+
           if os.path.exists("icon.png"):
-              img = Image.open("icon.png").convert("RGBA")
-              w, h = img.size
+              base_img = Image.open("icon.png").convert("RGBA")
+              w, h = base_img.size
               m = min(w, h)
-              img = img.crop(((w - m) // 2, (h - m) // 2, (w + m) // 2, (h + m) // 2))
-              img = img.resize((192, 192), Image.LANCZOS)
-              img.save(out_icon, "PNG")
+              base_img = base_img.crop(((w - m) // 2, (h - m) // 2, (w + m) // 2, (h + m) // 2))
           else:
-              Image.new("RGBA", (192, 192), (33, 150, 243, 255)).save(out_icon, "PNG")
+              base_img = Image.new("RGBA", (512, 512), (33, 150, 243, 255))
+
+          densities = {
+              "mipmap-mdpi": 48,
+              "mipmap-hdpi": 72,
+              "mipmap-xhdpi": 96,
+              "mipmap-xxhdpi": 144,
+              "mipmap-xxxhdpi": 192,
+          }
+          for folder, size in densities.items():
+              out_dir = os.path.join("app/src/main/res", folder)
+              os.makedirs(out_dir, exist_ok=True)
+              resized = base_img.resize((size, size), Image.LANCZOS)
+              resized.save(os.path.join(out_dir, "ic_launcher.png"), "PNG")
+              resized.save(os.path.join(out_dir, "ic_launcher_round.png"), "PNG")
           '
 
       - name: Compile APK
@@ -83,4 +122,3 @@ jobs:
         with:
           name: built-apk
           path: final-app.apk
-          
