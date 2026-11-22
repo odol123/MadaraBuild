@@ -1,232 +1,496 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1024">
 <title>Cube Timer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
 <style>
-:root{color-scheme:dark}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0}
+:root{
+  --glass:rgba(255,255,255,.07);
+  --glass-hi:rgba(255,255,255,.13);
+  --border:rgba(255,255,255,.16);
+  --shine:rgba(255,255,255,.22);
+  --text:#fff;
+  --muted:rgba(255,255,255,.62);
+  --accent:#6366f1;
+  --accent-2:#a855f7;
+  --danger:#ef4444;
+  --grad:linear-gradient(150deg,#0b1024 0%,#1b1740 55%,#2a0f3d 100%);
+  --blur:16px;
+  --bgimg:none;
+  --overlay:.38;
+  --radius:22px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
 body{
+  font-family:'Plus Jakarta Sans',system-ui,-apple-system,sans-serif;
+  color:var(--text);background:var(--grad);min-height:100dvh;
+  display:flex;flex-direction:column;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;
+}
+body::before{
+  content:'';position:fixed;inset:-40px;z-index:-3;pointer-events:none;
+  background-image:var(--bgimg);background-size:cover;background-position:center;
+  filter:blur(var(--blur));transform:translateZ(0);transition:filter .25s,opacity .25s;
+}
+body::after{
+  content:'';position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:var(--grad);opacity:var(--overlay);transition:opacity .25s;
+}
+.glass-panel{
+  background:linear-gradient(160deg,rgba(255,255,255,.085),rgba(255,255,255,.022));
+  border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:0 10px 28px rgba(0,0,0,.30),inset 0 1px 0 var(--shine);
+}
+header{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:.7rem 1.1rem;border-bottom:1px solid var(--border);
+  background:rgba(10,12,30,.42);position:sticky;top:0;z-index:20;backdrop-filter:blur(14px);
+}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:1.02rem;letter-spacing:-.4px}
+.logo-icon{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent-2));
+  box-shadow:0 4px 14px rgba(99,102,241,.45);
+}
+.nav-controls{display:flex;gap:8px}
+.btn{
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+  padding:9px 14px;border-radius:12px;font-weight:700;font-size:.85rem;
+  font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+  transition:background .18s,border-color .18s,transform .12s;
+}
+.btn:hover{background:var(--glass-hi);border-color:rgba(255,255,255,.3)}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn-icon{padding:9px 11px}
+.btn-danger{border-color:rgba(239,68,68,.5);color:#fecaca}
+.btn-danger:hover{background:rgba(239,68,68,.18)}
+.main-container{
+  flex:1;display:grid;grid-template-columns:290px minmax(0,1fr) 320px;
+  gap:16px;padding:16px;max-width:1560px;margin:0 auto;width:100%;
+}
+.sidebar-left,.sidebar-right{display:flex;flex-direction:column;gap:16px;min-width:0}
+.center-stage{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(max-width:1180px){
+  .main-container{grid-template-columns:minmax(0,1fr) 300px}
+  .sidebar-left{display:none}
+}
+@media(max-width:860px){
+  .main-container{grid-template-columns:minmax(0,1fr);padding:10px;gap:12px}
+  header{padding:.6rem .8rem}
+  .logo span{display:none}
+  .nav-controls .btn span{display:none}
+  .nav-controls .btn{padding:9px 11px}
+  .history-list{max-height:300px}
+  .scramble-text{font-size:.92rem}
+}
+.panel-section{padding:16px}
+.section-title{
+  font-size:.72rem;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);
+  margin-bottom:12px;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px;
+}
+select,input[type=text],input[type=file],input[type=range]{
+  font-family:inherit;font-size:.9rem;color:var(--text);width:100%;
+  background:rgba(0,0,0,.32);border:1px solid var(--border);
+  border-radius:11px;padding:10px 12px;outline:none;transition:border-color .18s;
+}
+select:focus,input:focus{border-color:var(--accent)}
+select option{background:#161334;color:#fff}
+input[type=range]{padding:0;height:26px;background:none;border:none;accent-color:var(--accent)}
+input[type=file]{font-size:.78rem;padding:8px}
+input[type=file]::file-selector-button{
+  font-family:inherit;font-weight:700;font-size:.78rem;margin-right:10px;cursor:pointer;
+  background:var(--glass-hi);color:#fff;border:1px solid var(--border);
+  border-radius:9px;padding:7px 11px;
+}
+.form-group{margin-bottom:14px}
+.form-group:last-child{margin-bottom:0}
+.form-label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:6px;font-weight:700}
+.form-label b{color:#c7d2fe}
+.stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat-card{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:14px;padding:11px;display:flex;flex-direction:column;gap:3px;
+}
+.stat-lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.6px}
+.stat-val{font-family:'JetBrains Mono',monospace;font-size:1.12rem;font-weight:800}
+.scramble-box{
+  background:rgba(0,0,0,.28);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px 16px;text-align:center;
+  display:flex;flex-direction:column;gap:10px;
+}
+.scramble-text{
+  font-family:'JetBrains Mono',monospace;font-size:1.08rem;font-weight:700;
+  line-height:1.5;word-spacing:3px;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6);
+  min-height:1.5em;
+}
+.scramble-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.net-wrap{display:none;padding-top:4px}
+.net-wrap.show{display:block}
+.net{
+  display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,auto);
+  gap:5px;width:min(270px,100%);margin:0 auto;
+}
+.net-face{display:grid;gap:2px;aspect-ratio:1;background:rgba(0,0,0,.4);padding:2px;border-radius:6px}
+.net-face.blank{background:transparent;padding:0}
+.net-cell{border-radius:2px;border:1px solid rgba(0,0,0,.45)}
+.timer-top-bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px}
+.session-badge{
+  font-size:.78rem;font-weight:800;color:var(--muted);
+  background:rgba(255,255,255,.06);padding:6px 12px;border-radius:10px;
+  border:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.timer-box{
+  flex:1;min-height:300px;background:rgba(0,0,0,.24);
+  border:1px solid var(--border);border-radius:var(--radius);
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:#0b0b0f center/cover no-repeat;
-  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#fff;
-  overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation;
+  cursor:pointer;position:relative;padding:24px;overflow:hidden;
+  transition:background .18s,border-color .18s,box-shadow .18s;
+  touch-action:none;
 }
-#veil{position:fixed;inset:0;background:#0006;pointer-events:none;z-index:0}
-main{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1rem;width:100%}
-#time{font-size:22vmin;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-shadow:0 2px 24px #000c}
-body.running #time{color:#fff}
-#msg{min-height:1.4em;font-size:clamp(13px,3vmin,24px);font-weight:700;letter-spacing:.14em;opacity:0;transition:opacity .25s;text-shadow:0 0 18px #000}
-#msg.on{opacity:1;color:#ffd400}
-#bar{position:relative;z-index:1;display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;padding:.75rem 1rem 3.2rem}
-button,label.btn{
-  font:inherit;font-size:clamp(12px,1.8vmin,16px);padding:.55em 1em;border-radius:.6em;
-  border:1px solid #ffffff30;background:#ffffff12;color:#fff;cursor:pointer;backdrop-filter:blur(6px)
+.timer-box.hold{border-color:rgba(245,158,11,.65);background:rgba(245,158,11,.10)}
+.timer-box.ready{border-color:rgba(34,197,94,.8);background:rgba(34,197,94,.17);box-shadow:0 0 0 3px rgba(34,197,94,.14)}
+.timer-box.running{border-color:rgba(99,102,241,.65);background:rgba(0,0,0,.12)}
+.timer-display{
+  font-family:'JetBrains Mono',monospace;font-size:clamp(3.4rem,9vw,7rem);
+  font-weight:800;letter-spacing:-2px;font-variant-numeric:tabular-nums;
+  text-shadow:0 6px 24px rgba(0,0,0,.55);transition:color .15s;line-height:1.05;
+  word-break:break-all;text-align:center;
 }
-button:hover,label.btn:hover{background:#ffffff22}
-#solves{
-  position:fixed;bottom:0;left:0;right:0;z-index:1;display:flex;gap:.5rem;overflow-x:auto;
-  padding:.5rem .75rem;font-size:13px;background:#0007;backdrop-filter:blur(6px)
+.timer-box.ready .timer-display{color:#86efac}
+.timer-box.hold .timer-display{color:#fde68a}
+.timer-hint{
+  font-size:.82rem;color:var(--muted);font-weight:700;margin-top:10px;
+  letter-spacing:.3px;text-align:center;
 }
-#solves span{padding:.15em .55em;border-radius:.4em;background:#ffffff14;white-space:nowrap}
-#solves span.best{background:#ffd40026;color:#ffd400;font-weight:700}
-#hint{position:fixed;top:.55rem;left:0;right:0;text-align:center;font-size:12px;opacity:.45;z-index:1}
-:fullscreen #bar,:fullscreen #hint{display:none}
-:fullscreen #solves{opacity:.3}
+.history-list{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;padding-right:4px}
+.history-list::-webkit-scrollbar{width:4px}
+.history-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:4px}
+.history-item{
+  background:rgba(255,255,255,.03);border:1px solid var(--border);
+  border-radius:12px;padding:8px 9px;display:flex;align-items:center;gap:8px;
+  font-size:.86rem;transition:background .15s;
+}
+.history-item:hover{background:rgba(255,255,255,.08)}
+.hi-left{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.hi-idx{font-size:.68rem;color:var(--muted);font-weight:800;width:24px;flex:none;text-align:right}
+.hi-time{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:.98rem}
+.hi-time.dnf{color:#fca5a5}
+.hi-pen{font-size:.68rem;font-weight:800;padding:2px 6px;border-radius:6px;flex:none}
+.hi-pen.plus2{background:rgba(245,158,11,.22);color:#fde68a}
+.hi-actions{display:flex;gap:1px;flex:none}
+.btn-mini{
+  background:none;border:none;color:var(--muted);cursor:pointer;
+  padding:5px 6px;border-radius:7px;font-size:.7rem;font-weight:800;font-family:inherit;
+  transition:background .15s,color .15s;
+}
+.btn-mini:hover{background:rgba(255,255,255,.14);color:#fff}
+.btn-mini.del:hover{background:rgba(239,68,68,.25);color:#fecaca}
+.empty-note{font-size:.8rem;color:var(--muted);text-align:center;padding:18px 6px;line-height:1.5}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(5,7,18,.72);z-index:100;
+  display:grid;place-items:center;padding:16px;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-backdrop.open{opacity:1;pointer-events:auto}
+.modal{
+  background:#131735;border:1px solid var(--border);border-radius:24px;
+  width:100%;max-width:520px;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.6);
+  max-height:90vh;overflow-y:auto;
+}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.modal-title{font-size:1.15rem;font-weight:800}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.toast{
+  position:fixed;left:50%;bottom:24px;transform:translate(-50%,16px);
+  background:rgba(20,24,52,.96);border:1px solid var(--border);color:#fff;
+  padding:11px 18px;border-radius:14px;font-size:.85rem;font-weight:700;
+  box-shadow:0 12px 34px rgba(0,0,0,.5);z-index:300;
+  opacity:0;transition:opacity .22s,transform .22s;pointer-events:none;max-width:90vw;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.record-badge{
+  background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(239,68,68,.25));
+  border:1px solid rgba(245,158,11,.6);border-radius:12px;padding:8px 12px;
+  font-size:.78rem;font-weight:800;color:#fde68a;display:inline-flex;align-items:center;gap:6px;
+  animation:pulseRec 1.5s infinite alternate;margin-bottom:8px;
+}
+@keyframes pulseRec{
+  0%{transform:scale(1);box-shadow:0 0 0 rgba(245,158,11,0)}
+  100%{transform:scale(1.02);box-shadow:0 0 16px rgba(245,158,11,.4)}
+}
+body.is-fullscreen header,
+body.is-fullscreen .sidebar-left,
+body.is-fullscreen .sidebar-right,
+body.is-fullscreen .scramble-box,
+body.is-fullscreen .timer-top-bar{display:none !important}
+body.is-fullscreen{overflow:hidden}
+body.is-fullscreen::before{filter:blur(calc(var(--blur) * .28));inset:-20px}
+body.is-fullscreen::after{opacity:calc(var(--overlay) * .45)}
+body.is-fullscreen .main-container{padding:0;max-width:none;height:100dvh;gap:0}
+body.is-fullscreen .center-stage{height:100dvh;padding:0}
+body.is-fullscreen .timer-box{
+  border:none;border-radius:0;background:transparent;
+  flex:1;height:100%;width:100%;padding:16px;
+}
+body.is-fullscreen .timer-display{font-size:clamp(4rem,17vw,13rem);letter-spacing:-4px}
+body.is-fullscreen .timer-hint{font-size:.9rem;opacity:.8}
+.unfs-btn{
+  position:fixed;top:18px;right:18px;z-index:250;display:none;
+  background:rgba(0,0,0,.58);border:1px solid rgba(255,255,255,.32);color:#fff;
+  padding:10px 16px;border-radius:14px;font-weight:800;font-size:.85rem;
+  font-family:inherit;cursor:pointer;backdrop-filter:blur(10px);
+  box-shadow:0 8px 24px rgba(0,0,0,.5);align-items:center;gap:8px;
+}
+body.is-fullscreen .unfs-btn{display:inline-flex}
 </style>
 <meta name="application-name" content="Cube Timer">
 </head>
 <body>
-<div id="veil"></div>
 
-<main id="tap">
-  <div id="time">0.00</div>
-  <div id="msg"></div>
+<header>
+  <div class="logo">
+    <div class="logo-icon">
+      <svg width="18" height="18" fill="none" stroke="white" stroke-width="2.4" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+    </div>
+    <span>AetherCube</span>
+  </div>
+  <div class="nav-controls">
+    <button class="btn btn-icon" id="btn-fs" title="Perbesar Timer">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+      <span>Perbesar</span>
+    </button>
+    <button class="btn btn-icon" id="btn-settings" title="Pengaturan">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>Pengaturan</span>
+    </button>
+  </div>
+</header>
+
+<button class="unfs-btn" id="btn-unfs">
+  <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>
+  Perkecil
+</button>
+
+<main class="main-container">
+  <aside class="sidebar-left">
+    <div class="glass-panel panel-section">
+      <div class="section-title">Statistik Sesi</div>
+      <div class="stats-grid">
+        <div class="stat-card"><span class="stat-lbl">Tercepat</span><span class="stat-val" id="stat-best">-</span></div>
+        <div class="stat-card"><span class="stat-lbl">Ao5</span><span class="stat-val" id="stat-ao5">-</span></div>
+        <div class="stat-card"><span class="stat-lbl">Ao12</span><span class="stat-val" id="stat-ao12">-</span></div>
+        <div class="stat-card"><span class="stat-lbl">Ao50</span><span class="stat-val" id="stat-ao50">-</span></div>
+        <div class="stat-card" style="grid-column:1/-1"><span class="stat-lbl">Mean (rata-rata)</span><span class="stat-val" id="stat-mean">-</span></div>
+      </div>
+    </div>
+    <div class="glass-panel panel-section" style="flex:1;display:flex;flex-direction:column">
+      <div class="section-title">Grafik Progres</div>
+      <div style="flex:1;min-height:150px;display:grid;place-items:center">
+        <canvas id="prog-canvas" style="width:100%;height:140px;display:block"></canvas>
+      </div>
+    </div>
+  </aside>
+
+  <section class="center-stage">
+    <div class="scramble-box glass-panel">
+      <div id="record-banner-slot"></div>
+      <div class="scramble-text" id="scramble-disp">Memuat scramble…</div>
+      <div class="scramble-actions">
+        <button class="btn" id="btn-new-scramble" style="padding:6px 12px;font-size:.78rem">Acak Baru</button>
+        <button class="btn" id="btn-toggle-net" style="padding:6px 12px;font-size:.78rem">Jaring Warna</button>
+      </div>
+      <div class="net-wrap" id="net-wrap"><div class="net" id="net-grid"></div></div>
+    </div>
+
+    <div class="timer-top-bar">
+      <div class="session-badge" id="session-lbl">Sesi Utama · 3x3x3</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn" id="btn-plus2" style="padding:6px 10px;font-size:.75rem">+2</button>
+        <button class="btn btn-danger" id="btn-dnf" style="padding:6px 10px;font-size:.75rem">DNF</button>
+      </div>
+    </div>
+
+    <div class="timer-box glass-panel" id="timer-box" role="button" tabindex="0" aria-label="Timer utama">
+      <div class="timer-display" id="timer-display">0.00</div>
+      <div class="timer-hint" id="timer-hint">Tekan spasi atau sentuh layar untuk mulai</div>
+    </div>
+  </section>
+
+  <aside class="sidebar-right">
+    <div class="glass-panel panel-section" style="display:flex;flex-direction:column;flex:1">
+      <div class="section-title">
+        <span>Riwayat Solve</span>
+        <button class="btn btn-danger" id="btn-clear-session" style="padding:3px 7px;font-size:.65rem">Reset</button>
+      </div>
+      <div class="history-list" id="history-list">
+        <div class="empty-note">Belum ada solve tersimpan dalam sesi ini.</div>
+      </div>
+    </div>
+  </aside>
 </main>
 
-<div id="bar">
-  <button id="fs">⛶ Layar Penuh</button>
-  <label class="btn">🖼 Latar<input id="bg" type="file" accept="image/*" hidden></label>
-  <button id="notif">🔔 Notifikasi</button>
-  <button id="reset">↺ Hapus Rekor</button>
+<div class="modal-backdrop" id="settings-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Pengaturan &amp; Sesi</div>
+      <button class="btn btn-icon" id="modal-close" style="padding:6px 10px">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Kategori / Event</label>
+      <select id="event-select">
+        <option value="333">3x3x3 Cube</option>
+        <option value="222">2x2x2 Cube</option>
+        <option value="444">4x4x4 Cube</option>
+        <option value="pyram">Pyraminx</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Foto Latar Belakang (Wallpaper)</label>
+      <input type="file" id="bg-file-input" accept="image/*">
+      <div class="row-btns" style="margin-top:8px">
+        <button class="btn btn-danger" id="btn-remove-bg" style="padding:6px 10px;font-size:.75rem">Hapus Wallpaper</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Kegelapan Latar: <b id="val-overlay">38%</b></label>
+      <input type="range" id="overlay-range" min="0" max="90" step="1" value="38">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Blur Latar: <b id="val-blur">16px</b></label>
+      <input type="range" id="blur-range" min="0" max="30" step="1" value="16">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Inspeksi WCA (15 detik)</label>
+      <select id="inspect-select">
+        <option value="on">Aktif (standar WCA)</option>
+        <option value="off">Nonaktif</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Efek Suara</label>
+      <select id="sound-select">
+        <option value="on">Aktif</option>
+        <option value="off">Nonaktif</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Getar (Haptik)</label>
+      <select id="haptic-select">
+        <option value="on">Aktif</option>
+        <option value="off">Nonaktif</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nama Sesi</label>
+      <input type="text" id="session-input" maxlength="28" placeholder="Sesi Utama">
+    </div>
+
+    <div class="row-btns" style="margin-top:18px">
+      <button class="btn" id="btn-export" style="padding:8px 12px;font-size:.78rem">Ekspor Data</button>
+      <button class="btn btn-danger" id="btn-wipe" style="padding:8px 12px;font-size:.78rem">Hapus Semua Data</button>
+    </div>
+  </div>
 </div>
 
-<div id="hint">Spasi / tap = start–stop · F = layar penuh · Esc = keluar</div>
-<div id="solves"></div>
+<div class="toast" id="toast-msg">Pesan</div>
 
 <script>
-const $ = s => document.querySelector(s);
-const timeEl = $('#time'), msgEl = $('#msg'), solvesEl = $('#solves');
-const LS_BEST = 'cube.best', LS_BG = 'cube.bg', LS_SOLVES = 'cube.solves';
+(function(){
+'use strict';
 
-const storedBest = parseFloat(localStorage.getItem(LS_BEST));
-let best = Number.isFinite(storedBest) ? storedBest : Infinity;
-let solves = [];
-try { solves = JSON.parse(localStorage.getItem(LS_SOLVES) || '[]') || []; } catch { solves = []; }
+var HOLD_MS = 300;
+var KEY = 'aethercube.v5';
+var $ = function(id){ return document.getElementById(id); };
 
-let t0 = 0, raf = 0, running = false, msgTimer = 0;
+var DEFAULTS = {
+  event:'333', inspection:'on', overlay:38, blur:16, bgImg:'',
+  sound:'on', haptics:'on', sessionName:'Sesi Utama', history:[]
+};
 
-function fmt(ms) {
-  const s = ms / 1000;
-  if (s < 60) return s.toFixed(2);
-  const m = Math.floor(s / 60);
-  return m + ':' + (s - m * 60).toFixed(2).padStart(5, '0');
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+function load(){
+  try{
+    var raw = localStorage.getItem(KEY);
+    if(!raw) return clone(DEFAULTS);
+    var parsed = JSON.parse(raw);
+    var out = clone(DEFAULTS);
+    for(var k in parsed){ if(Object.prototype.hasOwnProperty.call(parsed,k)) out[k] = parsed[k]; }
+    if(!Array.isArray(out.history)) out.history = [];
+    return out;
+  }catch(e){ return clone(DEFAULTS); }
 }
 
-function tick() {
-  timeEl.textContent = fmt(performance.now() - t0);
-  raf = requestAnimationFrame(tick);
+var S = load();
+
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ toast('Penyimpanan penuh — wallpaper tidak disimpan'); }
 }
 
-function start() {
-  running = true;
-  document.body.classList.add('running');
-  t0 = performance.now();
-  tick();
+var toastTimer = 0;
+function toast(msg){
+  var t = $('toast-msg');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2200);
 }
 
-function stop() {
-  cancelAnimationFrame(raf);
-  running = false;
-  document.body.classList.remove('running');
-  const ms = performance.now() - t0;
-  timeEl.textContent = fmt(ms);
-  record(ms);
-}
-
-function record(ms) {
-  const isPB = ms < best;
-  solves.unshift(Math.round(ms));
-  solves = solves.slice(0, 50);
-  if (isPB) {
-    best = ms;
-    localStorage.setItem(LS_BEST, String(best));
-  }
-  localStorage.setItem(LS_SOLVES, JSON.stringify(solves));
-  renderSolves();
-  if (isPB) {
-    announce('REKOR BARU! ' + fmt(ms));
-    beep();
-    notify('Rekor baru: ' + fmt(ms));
-  }
-}
-
-function announce(text) {
-  msgEl.textContent = text;
-  msgEl.classList.add('on');
-  clearTimeout(msgTimer);
-  msgTimer = setTimeout(() => msgEl.classList.remove('on'), 4000);
-}
-
-let audioCtx = null;
-function beep() {
-  try {
-    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+var actx = null;
+function beep(freq, dur){
+  if(S.sound !== 'on') return;
+  try{
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if(!Ctx) return;
+    if(!actx) actx = new Ctx();
+    if(actx.state === 'suspended') actx.resume();
+    var o = actx.createOscillator();
+    var g = actx.createGain();
     o.type = 'sine';
-    o.frequency.value = 880;
-    g.gain.setValueAtTime(.18, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(.0001, audioCtx.currentTime + .35);
-    o.connect(g).connect(audioCtx.destination);
-    o.start();
-    o.stop(audioCtx.currentTime + .35);
-  } catch { /* ponytail: audio opsional, browser bisa block */ }
+    o.frequency.value = freq;
+    var t0 = actx.currentTime;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.16, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  }catch(e){}
+}
+function buzz(ms){
+  if(S.haptics !== 'on') return;
+  try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){}
 }
 
-function notify(body) {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  try { new Notification('Cube Timer', { body, tag: 'pb' }); } catch { /* mobile butuh service worker */ }
+function fmt(ms, penalty){
+  if(penalty === 'DNF') return 'DNF';
+  var v = ms + (penalty === '+2' ? 2000 : 0);
+  if(!isFinite(v) || v < 0) v = 0;
+  var cs = Math.floor(v / 10) % 100;
+  var totalS = Math.floor(v / 1000);
+  var s = totalS % 60;
+  var m = Math.floor(totalS / 60);
+  var p2 = function(n){ return n < 10 ? '0' + n : '' + n; };
+  return m > 0 ? m + ':' + p2(s) + '.' + p2(cs) : s + '.' + p2(cs);
 }
 
-function renderSolves() {
-  solvesEl.innerHTML = '';
-  const b = document.createElement('span');
-  b.className = 'best';
-  b.textContent = 'PB ' + (Number.isFinite(best) ? fmt(best) : '—');
-  solvesEl.append(b);
-  solves.forEach((ms, i) => {
-    const s = document.createElement('span');
-    s.textContent = (i + 1) + '. ' + fmt(ms);
-    solvesEl.append(s);
-  });
-}
+var FACE = ['U','D','L','R','F','B'];
+var AXIS = { 
 
-/* --- kontrol --- */
-function toggle() { running ? stop() : start(); }
-
-addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.key === ' ') {
-    e.preventDefault();
-    if (e.repeat) return;
-    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
-    toggle();
-  } else if (e.key === 'f' || e.key === 'F') {
-    e.preventDefault();
-    toggleFs();
-  }
-});
-addEventListener('keyup', e => { if (e.code === 'Space') e.preventDefault(); });
-
-$('#tap').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  toggle();
-});
-
-function toggleFs() {
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  else document.documentElement.requestFullscreen().catch(() => announce('Layar penuh tidak didukung'));
-}
-$('#fs').onclick = toggleFs;
-
-$('#bg').onchange = e => {
-  const f = e.target.files && e.target.files[0];
-  if (!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    applyBg(r.result);
-    try { localStorage.setItem(LS_BG, r.result); }
-    catch { announce('Foto besar — tidak tersimpan permanen'); }
-  };
-  r.readAsDataURL(f);
-  e.target.value = '';
-};
-
-function applyBg(url) {
-  document.body.style.backgroundImage = 'url("' + url + '")';
-}
-
-$('#notif').onclick = () => {
-  if (!('Notification' in window)) return announce('Notifikasi tidak didukung');
-  Notification.requestPermission().then(p =>
-    announce(p === 'granted' ? 'Notifikasi aktif' : 'Notifikasi ditolak')
-  );
-};
-
-$('#reset').onclick = () => {
-  best = Infinity;
-  solves = [];
-  localStorage.removeItem(LS_BEST);
-  localStorage.removeItem(LS_SOLVES);
-  renderSolves();
-  announce('Rekor dihapus');
-};
-
-/* --- init --- */
-renderSolves();
-const savedBg = localStorage.getItem(LS_BG);
-if (savedBg) applyBg(savedBg);
-
-/* self-check: buka index.html?test */
-if (location.search.includes('test')) {
-  console.assert(fmt(1234) === '1.23', 'fmt detik', fmt(1234));
-  console.assert(fmt(65500) === '1:05.50', 'fmt menit', fmt(65500));
-  console.assert(fmt(60000) === '1:00.00', 'fmt tepat 1 menit', fmt(60000));
-  console.log('self-check selesai');
-}
-</script>
-</body>
-</html>
-
-Zip: kerangka zip butuh arsip biner — file di atas auto-attach sebagai `index.html`, taruh dalam folder lalu `zip cube-timer.zip index.html` kalau perlu arsip. → skipped: multi-file (CSS/JS terpisah), average-of-5, scramble generator; add when diminta.
+...[isi file dipotong karena melebihi batas karakter]
