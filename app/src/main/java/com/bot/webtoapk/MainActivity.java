@@ -22,9 +22,13 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MadaraWebView";
@@ -33,6 +37,7 @@ public class MainActivity extends Activity {
 
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    private boolean consoleErrorShown = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +80,36 @@ public class MainActivity extends Activity {
                             String mime = guessMimeType(assetPath);
                             Map<String, String> headers = new HashMap<>();
                             headers.put("Access-Control-Allow-Origin", "*");
+
+                            if ("index.html".equalsIgnoreCase(assetPath)) {
+                                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                                byte[] buf = new byte[4096];
+                                int len;
+                                while ((len = is.read(buf)) != -1) bos.write(buf, 0, len);
+                                is.close();
+                                String html = bos.toString("UTF-8");
+                                String earlyGuard =
+                                    "<script>" +
+                                    "window.__madaraErr=false;" +
+                                    "function __showErr(m){if(window.__madaraErr)return;window.__madaraErr=true;alert('Error JS: '+m);}" +
+                                    "window.addEventListener('error',function(e){__showErr((e.message||'Script error')+' (baris '+(e.lineno||0)+')');});" +
+                                    "window.addEventListener('unhandledrejection',function(e){__showErr('Promise: '+(e.reason&&e.reason.message?e.reason.message:e.reason));});" +
+                                    "</script>";
+                                if (html.toLowerCase().contains("<head>")) {
+                                    html = html.replaceFirst("(?i)<head>", "<head>" + Matcher.quoteReplacement(earlyGuard));
+                                } else {
+                                    html = earlyGuard + html;
+                                }
+                                return new WebResourceResponse(
+                                    mime,
+                                    "UTF-8",
+                                    200,
+                                    "OK",
+                                    headers,
+                                    new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8))
+                                );
+                            }
+
                             return new WebResourceResponse(mime, "UTF-8", 200, "OK", headers, is);
                         } catch (Exception e) {
                             Log.e(TAG, "Asset tidak ditemukan: " + assetPath, e);
@@ -125,6 +160,14 @@ public class MainActivity extends Activity {
                     "JS Console [" + consoleMessage.messageLevel() + "]: " +
                     consoleMessage.message() + " @ line " + consoleMessage.lineNumber()
                 );
+                if (consoleMessage.messageLevel() == ConsoleMessage.MessageLevel.ERROR && !consoleErrorShown) {
+                    consoleErrorShown = true;
+                    new AlertDialog.Builder(MainActivity.this)
+                        .setTitle("Console Error")
+                        .setMessage(consoleMessage.message() + "\n(Baris " + consoleMessage.lineNumber() + ")")
+                        .setPositiveButton("OK", null)
+                        .show();
+                }
                 return true;
             }
 
